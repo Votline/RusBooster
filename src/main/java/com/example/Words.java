@@ -4,13 +4,9 @@ import java.sql.Connection;
 import java.sql.Statement;
 import java.sql.PreparedStatement;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.Map;
-import java.util.HashMap;
 
 public class Words{
-	private Map<String, String> words = new HashMap<>();
 	private String message;
 
 	private String url = "jdbc:sqlite:" + System.getProperty("user.dir") + "/words.db";
@@ -20,7 +16,8 @@ public class Words{
 		try(Connection conn = DriverManager.getConnection(url)){
 			sql = "CREATE TABLE IF NOT EXISTS words (" +
 				"word TEXT NOT NULL," +
-				"explanation TEXT NOT NULL" +
+				"explanation TEXT NOT NULL," +
+				"task_id INTEGER NOT NULL" +
 			");";
 			Statement statement = conn.createStatement();
 			statement.execute(sql);
@@ -31,15 +28,22 @@ public class Words{
 		}
 
 	}
-	public String addWord(String name, String explanation){
+	public String addWord(String name, String explanation, String task_id){
+		createTable();
 		try(Connection conn = DriverManager.getConnection(url)){
-			createTable();
-			sql = "INSERT INTO words(word, explanation) VALUES(?, ?)";
+			if(checkBase(name, task_id)){
+				message = "Слово " + name + " для задания " + task_id + " уже существует в базе данных.";
+				System.out.println(message);
+				return message;
+			}
+
+			sql = "INSERT INTO words(word, explanation, task_id) VALUES(?, ?, ?)";
 			PreparedStatement pstmt = conn.prepareStatement(sql);
 			pstmt.setString(1, name);
 			pstmt.setString(2, explanation);
+			pstmt.setString(3, task_id);
 			pstmt.executeUpdate();
-			message = "Добавил слово " + name + ". Значение: " + explanation;
+			message = "Добавил слово " + name + ". Значение: " + explanation + ". Задание: " + task_id + ".";
 			System.out.println(message);
 		}
 		catch(SQLException e){
@@ -48,27 +52,29 @@ public class Words{
 		return message;
 
 	}
-/*
-	public String removeWord(String name){
-		try{
-			if(base.exists()){
-				if(words.containsKey(name)){
-					message = "Удалил слово " + name;
-					System.out.println(message);
-				}
-				else{
-					message = "Слово" + name + " не найдено! ";
-					System.out.println(message);
-				}
+
+	public String removeWord(String name, String task_id){
+		try(Connection conn = DriverManager.getConnection(url)){
+			if( !(checkBase(name, task_id)) ){
+				message = "Слово " + name + " для задания " + task_id + " не существует в базе данных.";
+				System.out.println(message);
+				return message;
 			}
+			sql = "DELETE FROM words WHERE word = ? AND task_id = ?";
+			PreparedStatement pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, name);
+			pstmt.setString(2, task_id);
+			pstmt.executeUpdate();
+			message = "Удалил слово " + name + " для задания " + task_id + " из базы данных.";
+			System.out.println(message);
 		}
-		catch(IOException e){
+		catch(SQLException e){
 			e.printStackTrace();
 
 		}
 		return message;
 	}
-
+/*
 	public String showAllBase(){
 		try{
 			if(base.exists()){
@@ -86,4 +92,19 @@ public class Words{
 		return message;
 	}
 */
+	private boolean checkBase(String name, String task_id){
+		try(Connection conn = DriverManager.getConnection(url)){
+			sql = "SELECT 1 FROM words WHERE word = ? AND task_id = ?";
+			PreparedStatement checkPSTMT = conn.prepareStatement(sql);
+			checkPSTMT.setString(1, name);
+			checkPSTMT.setString(2, task_id);
+			if( (checkPSTMT.executeQuery()).next() ){
+				return true;
+			}
+		}
+		catch(SQLException e){
+			e.printStackTrace();
+		}
+		return false;
+	}
 }

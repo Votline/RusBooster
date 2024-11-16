@@ -6,18 +6,20 @@ public class AdminCommands{
 
 	public SendMessage dataBase(String messageText, long chatId){
 		message.setChatId(String.valueOf(chatId));
-		String[] parts = messageText.split(" ", 4);
+		String[] parts = messageText.split(" ", 5);
 		if(messageText.contains("/add")){
-			String wordName = parts[2];
-			String wordExplanation = parts[3];
-			message.setText(words.addWord(wordName, wordExplanation));
+			String task_id = parts[2];
+			String wordName = parts[3];
+			String wordExplanation = parts[4];
+			message.setText(words.addWord(wordName, wordExplanation, task_id));
 		}
-/*		else if(messageText.contains("/remove")){
-			String wordName = parts[2];
-			message.setText(words.removeWord(wordName));
+		else if(messageText.contains("/remove")){
+			String task_id = parts[2];
+			String wordName = parts[3];
+			message.setText(words.removeWord(wordName, task_id));
 
 		}
-		else if(messageText.contains("/showall")){
+/*		else if(messageText.contains("/showall")){
 			message.setText(words.showAllBase());
 		}
 		else{

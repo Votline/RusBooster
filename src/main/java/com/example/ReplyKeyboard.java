@@ -46,9 +46,6 @@ public class ReplyKeyboard{
 
 		try{bot.execute(this.messageMenu); }
 		catch(TelegramApiException e){e.printStackTrace(); }
-
-		System.out.println(messageText);
-
 	}
 
 }
