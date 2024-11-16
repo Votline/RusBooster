@@ -19,7 +19,7 @@ public class AdminCommands{
 			message.setText(words.removeWord(wordName, task_id));
 
 		}
-/*		else if(messageText.contains("/showall")){
+		else if(messageText.contains("/showall")){
 			message.setText(words.showAllBase());
 		}
 		else{
@@ -27,6 +27,6 @@ public class AdminCommands{
 			System.out.println("Вывел ошибку: " + text);
 			message.setText(text);
 		}
-*/		return message;
+		return message;
 	}
 }

@@ -3,8 +3,7 @@ import java.sql.SQLException;
 import java.sql.Connection;
 import java.sql.Statement;
 import java.sql.PreparedStatement;
-
-import java.io.IOException;
+import java.sql.ResultSet;
 
 public class Words{
 	private String message;
@@ -21,7 +20,7 @@ public class Words{
 			");";
 			Statement statement = conn.createStatement();
 			statement.execute(sql);
-			System.out.println("Создал таблицу");
+			System.out.println("Создал таблицу words ");
 		}
 		catch(SQLException e){
 			e.printStackTrace();
@@ -74,24 +73,27 @@ public class Words{
 		}
 		return message;
 	}
-/*
+
 	public String showAllBase(){
-		try{
-			if(base.exists()){
-				message = " ";
-				words = objMapper.readValue(base, Map.class);
-				for(Map.Entry<String, String> entry : words.entrySet()){
-					message += "\nСлово: " + entry.getKey() + "\nЗначение: " + entry.getValue();
-					System.out.println(message);
-				}
+		try(Connection conn = DriverManager.getConnection(url)){
+			sql = "SELECT word, explanation, task_id FROM words";
+			Statement statement = conn.createStatement();
+			ResultSet result = statement.executeQuery(sql);
+			message = "";
+			while(result.next()){
+				String word = result.getString("word");
+				String explanation = result.getString("explanation");
+				String task_id = result.getString("task_id");
+				message += "Слово: " + "\"" + word + "\"" + ". Значение: " + "\"" +  explanation + "\"" +  ". Номер задания: " + "\"" +  task_id + "\"" + "\n \n";
+				System.out.println(message);
 			}
 		}
-		catch(IOException e){
+		catch(SQLException e){
 			e.printStackTrace();
 		}
 		return message;
 	}
-*/
+
 	private boolean checkBase(String name, String task_id){
 		try(Connection conn = DriverManager.getConnection(url)){
 			sql = "SELECT 1 FROM words WHERE word = ? AND task_id = ?";
