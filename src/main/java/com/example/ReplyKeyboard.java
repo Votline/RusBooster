@@ -25,26 +25,36 @@ public class ReplyKeyboard{
 
 	private boolean isChoosing = false;
 	private Settings settings = new Settings();
+	private Statistic statistic = new Statistic();
 
-	public void createMenu(TelegramLongPollingBot bot, long chatId, String messageText, String userId){
+	public void createMenu(TelegramLongPollingBot bot, Message message){
+		String messageText = message.getText();
+
+		long chatId = message.getChatId();
+		long userId = message.getFrom().getId();
+		String userName = message.getFrom().getFirstName();
+		if(message.getFrom().getLastName() != null){userName += message.getFrom().getLastName();}
+		this.messageMenu.setChatId(String.valueOf(chatId));
 		if(messageText.equals("Выбрать задание")){
 			this.messageMenu = check.createMenu(chatId, userId);
 			isChoosing = true;
+		}
+		else if(messageText.equals("Статистика")){
+			this.messageMenu.setText(statistic.getStatistic(userName, userId));
 		}
 		else{
 			this.messageMenu = main.createMenu(chatId);
 			try{
 				if(isChoosing){
  					if (Integer.parseInt(messageText) <= 26 &&  Integer.parseInt(messageText) >= 1){
-						settings.chooseExercise(userId, messageText);
-						System.out.println("Делегировал " + messageText + " to Settings.json");
+						settings.chooseExercise(userId, Integer.parseInt(messageText));
+						System.out.println("Делегировал " + messageText + " to Settings.java");
 					}
 					isChoosing = false;
 				}
 			}
 			catch(NumberFormatException e){
 				e.printStackTrace();
-				System.out.println("ОТКАЗ!");
 			}
 		}
 
@@ -78,10 +88,10 @@ class MainKeyboard{
 }
 
 class CheckKeyboard{
-	private String url = "jdbc:sqlite:" + System.getProperty("user.dir") + "/settings.db";
+	private String url = "jdbc:sqlite:" + System.getProperty("user.dir") + "/statistic.db";
 	private String sql;
 
-	public SendMessage createMenu(long chatId, String userId){
+	public SendMessage createMenu(long chatId, long userId){
 		SendMessage message = new SendMessage();
 		message.setChatId(String.valueOf(chatId));
 		message.setText("Напишите номер упражнения от 1 до 26: ");
@@ -92,13 +102,13 @@ class CheckKeyboard{
 		KeyboardRow row2 = new KeyboardRow();
 
 		try(Connection conn = DriverManager.getConnection(url)){
-			sql = "SELECT task_id FROM settings WHERE user_id = ?";
+			sql = "SELECT current_task FROM statistics WHERE user_id = ?";
 			PreparedStatement pstmt = conn.prepareStatement(sql);
-			pstmt.setString(1, userId);
+			pstmt.setLong(1, userId);
 			ResultSet result = pstmt.executeQuery();
 			if(result.next()){
 				KeyboardRow row1 = new KeyboardRow();
-				row1.add(new KeyboardButton("Текущее задание: " + result.getString("task_id") ));
+				row1.add(new KeyboardButton("Текущее задание: " + result.getString("current_task") ));
 				keyboard.add(row1);
 			}
 		}

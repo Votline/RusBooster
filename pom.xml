@@ -20,11 +20,6 @@
             <version>5.7.1</version>
         </dependency>
 	<dependency>
-	    <groupId>com.fasterxml.jackson.core</groupId>
-	    <artifactId>jackson-databind</artifactId>
-	    <version>2.14.0</version>
-	</dependency>
-	<dependency>
 	    <groupId>org.xerial</groupId>
 	    <artifactId>sqlite-jdbc</artifactId>
 	    <version>3.34.0</version> <!-- Можно выбрать последнюю версию -->

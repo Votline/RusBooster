@@ -4,5 +4,6 @@ MainKeyboard.class
 Words.class
 CheckKeyboard.class
 Settings.class
+Statistic.class
 ReplyKeyboard.class
 AdminCommands.class

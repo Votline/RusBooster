@@ -9,7 +9,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 
 public class RusBooster extends TelegramLongPollingBot{
-	private static final String BOT_TOKEN = "8014602670:AAGhfcXp26Vs0i-mcZN4XM8dh6W7q9b2vVc";
+	private static final String BOT_TOKEN = "token";
 	private static final String BOT_NAME = "RusBooster";
 
 
@@ -42,8 +42,7 @@ public class RusBooster extends TelegramLongPollingBot{
 			}
 		}
 		else if(messageText != null){
-			botMenu.createMenu(this, chatId, messageText, String.valueOf(userId));
-
+			botMenu.createMenu(this, update.getMessage());
 		}
 	}
 }

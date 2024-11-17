@@ -1,8 +1,8 @@
+import java.sql.PreparedStatement;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Connection;
 import java.sql.Statement;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
 public class Words{
@@ -18,8 +18,8 @@ public class Words{
 				"explanation TEXT NOT NULL," +
 				"task_id INTEGER NOT NULL" +
 			");";
-			Statement statement = conn.createStatement();
-			statement.execute(sql);
+			Statement stmt = conn.createStatement();
+			stmt.execute(sql);
 			System.out.println("Создал таблицу words ");
 		}
 		catch(SQLException e){
@@ -77,8 +77,8 @@ public class Words{
 	public String showAllBase(){
 		try(Connection conn = DriverManager.getConnection(url)){
 			sql = "SELECT word, explanation, task_id FROM words";
-			Statement statement = conn.createStatement();
-			ResultSet result = statement.executeQuery(sql);
+			Statement stmt = conn.createStatement();
+			ResultSet result = stmt.executeQuery(sql);
 			message = "";
 			while(result.next()){
 				String word = result.getString("word");
