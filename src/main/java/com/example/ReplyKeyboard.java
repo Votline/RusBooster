@@ -1,3 +1,9 @@
+import java.sql.PreparedStatement;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Connection;
+import java.sql.ResultSet;
+
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -16,15 +22,13 @@ public class ReplyKeyboard{
 	private MainKeyboard main = new MainKeyboard();
 	private CheckKeyboard check = new CheckKeyboard();
 	private SendMessage messageMenu = new SendMessage();
+
 	private boolean isChoosing = false;
-
-
 	private Settings settings = new Settings();
 
 	public void createMenu(TelegramLongPollingBot bot, long chatId, String messageText, String userId){
-
 		if(messageText.equals("Выбрать задание")){
-			this.messageMenu = check.createMenu(chatId);
+			this.messageMenu = check.createMenu(chatId, userId);
 			isChoosing = true;
 		}
 		else{
@@ -74,21 +78,34 @@ class MainKeyboard{
 }
 
 class CheckKeyboard{
-	public SendMessage createMenu(long chatId){
+	private String url = "jdbc:sqlite:" + System.getProperty("user.dir") + "/settings.db";
+	private String sql;
+
+	public SendMessage createMenu(long chatId, String userId){
 		SendMessage message = new SendMessage();
 		message.setChatId(String.valueOf(chatId));
-		message.setText("Выберите задание: ");
+		message.setText("Напишите номер упражнения от 1 до 26: ");
 
 		ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
 		keyboardMarkup.setResizeKeyboard(true);
-
 		List<KeyboardRow> keyboard = new ArrayList<>();
-		KeyboardRow row1 = new KeyboardRow();
 		KeyboardRow row2 = new KeyboardRow();
-		row1.add(new KeyboardButton("9"));
-		row1.add(new KeyboardButton("10"));
+
+		try(Connection conn = DriverManager.getConnection(url)){
+			sql = "SELECT task_id FROM settings WHERE user_id = ?";
+			PreparedStatement pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, userId);
+			ResultSet result = pstmt.executeQuery();
+			if(result.next()){
+				KeyboardRow row1 = new KeyboardRow();
+				row1.add(new KeyboardButton("Текущее задание: " + result.getString("task_id") ));
+				keyboard.add(row1);
+			}
+		}
+		catch(SQLException e){
+			e.printStackTrace();
+		}
 		row2.add(new KeyboardButton("Назад"));
-		keyboard.add(row1);
 		keyboard.add(row2);
 
 		keyboardMarkup.setKeyboard(keyboard);
