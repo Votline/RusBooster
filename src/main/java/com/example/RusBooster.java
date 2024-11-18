@@ -12,7 +12,6 @@ public class RusBooster extends TelegramLongPollingBot{
 	private static final String BOT_TOKEN = "token";
 	private static final String BOT_NAME = "RusBooster";
 
-
 	ReplyKeyboard botMenu = new ReplyKeyboard();
 	AdminCommands adminCommands = new AdminCommands();
 
