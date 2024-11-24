@@ -26,6 +26,7 @@ public class ReplyKeyboard{
 	private boolean isChoosing = false;
 	private Settings settings = new Settings();
 	private Statistic statistic = new Statistic();
+	private MainFunctional functional = new MainFunctional();
 
 	public void createMenu(TelegramLongPollingBot bot, Message message){
 		String messageText = message.getText();
@@ -35,9 +36,13 @@ public class ReplyKeyboard{
 		String userName = message.getFrom().getFirstName();
 		if(message.getFrom().getLastName() != null){userName += message.getFrom().getLastName();}
 		this.messageMenu.setChatId(String.valueOf(chatId));
+		
 		if(messageText.equals("Выбрать задание")){
 			this.messageMenu = check.createMenu(chatId, userId);
 			isChoosing = true;
+		}
+		else if(messageText.equals("Проверить знания")){
+			functional.makeTask(userId);
 		}
 		else if(messageText.equals("Статистика")){
 			this.messageMenu.setText(statistic.getStatistic(userName, userId));
