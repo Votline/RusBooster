@@ -24,10 +24,11 @@ public class MainFunctional{
 	private int task_Id;
 	private String sql;
 
+	String returnMessage;
 	private Random random = new Random();
 	private List<TaskMap> task = new ArrayList<>();
 
-	public void makeTask(long userId){
+	public String makeTask(long userId){
 		try(Connection connSet = DriverManager.getConnection(urlStat)){
 			sql = "SELECT current_task FROM statistics WHERE user_id = ?";
 			PreparedStatement pstmt = connSet.prepareStatement(sql);
@@ -56,32 +57,38 @@ public class MainFunctional{
 		switch(task_Id){
 			case 9:
 				Number9 number = new Number9();
-				number.createTask(random, task);
+				returnMessage = number.createTask(random, task);
 				break;
 			default:
+				returnMessage = "Такого задания ещё нет в RusBooster";
 				System.out.println(task_Id);
 				break;
+
 		}
+		return returnMessage;
 	}
 }
 
 class Number9{
-	public void createTask(Random random, List<TaskMap> task){
+	public String createTask(Random random, List<TaskMap> task){
 		String message = "\n";
+		String values = "\n";
 		for(int i = 1; i <= 5; i++){
 			message += String.valueOf(i) + ") ";
 			for(int j = 1; j <= 3; j++){
 				int randomIndex = random.nextInt(task.size());
 				String key = task.get(randomIndex).key;
+				String value = task.get(randomIndex).value;
 				task.remove(randomIndex);
 				message += key + " ";
-				System.out.println("Второй");
+				values += value + " ";
 			}	
-			System.out.println(message);
-			System.out.println("Первый");
 			message += "\n";
+			values += "\n";
 
 		}
 		System.out.println(message);
+		System.out.println(values);
+		return message;
 	}
 }

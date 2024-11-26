@@ -42,7 +42,7 @@ public class ReplyKeyboard{
 			isChoosing = true;
 		}
 		else if(messageText.equals("Проверить знания")){
-			functional.makeTask(userId);
+			this.messageMenu.setText(functional.makeTask(userId));
 		}
 		else if(messageText.equals("Статистика")){
 			this.messageMenu.setText(statistic.getStatistic(userName, userId));
