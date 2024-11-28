@@ -26,11 +26,11 @@ public class MainFunctional{
 
 	String returnMessage;
 	private Random random = new Random();
-	private List<TaskMap> task = new ArrayList<>();
+	private List<TaskMap> wordsForTask = new ArrayList<>();
 
 	public String makeTask(long userId){
 		try(Connection connSet = DriverManager.getConnection(urlStat)){
-			sql = "SELECT current_task FROM statistics WHERE user_id = ?";
+			sql = "SELECT current_wordsForTask FROM statistics WHERE user_id = ?";
 			PreparedStatement pstmt = connSet.prepareStatement(sql);
 			pstmt.setLong(1, userId);
 			task_Id = pstmt.executeQuery().getInt("current_task");
@@ -39,7 +39,7 @@ public class MainFunctional{
 			e.printStackTrace();
 		}
 		try(Connection conn = DriverManager.getConnection(url)){
-			task.clear();
+			wordsForTask.clear();
 			sql = "SELECT word, explanation FROM words WHERE task_id = ?";
 			PreparedStatement pstmt = conn.prepareStatement(sql);
 			pstmt.setInt(1, task_Id);
@@ -48,7 +48,7 @@ public class MainFunctional{
 			while(result.next()){
 				String word = result.getString("word");
 				String explanation = result.getString("explanation");
-				task.add(new TaskMap(word, explanation));
+				wordsForTask.add(new TaskMap(word, explanation));
 			}
 		}
 		catch(SQLException e){
@@ -56,8 +56,9 @@ public class MainFunctional{
 		}
 		switch(task_Id){
 			case 9:
-				Number9 number = new Number9();
-				returnMessage = number.createTask(random, task);
+				Number9 newTask = new Number9();
+				returnMessage = newTask.createTask(random, wordsForTask);
+				findAnswer();
 				break;
 			default:
 				returnMessage = "Такого задания ещё нет в RusBooster";
@@ -67,8 +68,43 @@ public class MainFunctional{
 		}
 		return returnMessage;
 	}
-}
 
+
+	private String findAnswer(String values);
+		String message = "";
+		String[] rows = values.strip().split("\n");
+		
+		for(int i = 0; i < rows.length; i++){
+			String wordExplanations = rows[i].split(" - ");
+			if(wordExplanations.length < 3){
+				boolean allMatch = true;
+				char base = findUpperCase(wordExplanation[0]); 
+				for(int j = 1; j < 3; j++){
+					if(base != findUpperCase(wordExplanation[i])){
+						allMatch=false;	
+						break;
+					}
+				}
+			}
+			if(allMatch){
+				message += (i+1);
+			}
+			else{
+				message = "Совпадений нет. Верный ответ: 0";
+			}
+			
+		}
+		return message;
+	}
+
+	private char findUpperCase(String text){
+		for(char c : text.toCharArray()){
+			if(Character.isUpperCase(c)) return c;
+		}
+		return '\0';
+	}
+
+}
 class Number9{
 	public String createTask(Random random, List<TaskMap> task){
 		String message = "\n";
