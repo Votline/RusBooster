@@ -30,7 +30,7 @@ public class MainFunctional{
 
 	public String makeTask(long userId){
 		try(Connection connSet = DriverManager.getConnection(urlStat)){
-			sql = "SELECT current_wordsForTask FROM statistics WHERE user_id = ?";
+			sql = "SELECT current_task FROM statistics WHERE user_id = ?";
 			PreparedStatement pstmt = connSet.prepareStatement(sql);
 			pstmt.setLong(1, userId);
 			task_Id = pstmt.executeQuery().getInt("current_task");
@@ -58,7 +58,6 @@ public class MainFunctional{
 			case 9:
 				Number9 newTask = new Number9();
 				returnMessage = newTask.createTask(random, wordsForTask);
-				findAnswer();
 				break;
 			default:
 				returnMessage = "Такого задания ещё нет в RusBooster";
@@ -70,38 +69,41 @@ public class MainFunctional{
 	}
 
 
-	private String findAnswer(String values);
+	public static String findAnswer(String values){
 		String message = "";
 		String[] rows = values.strip().split("\n");
 		
 		for(int i = 0; i < rows.length; i++){
-			String wordExplanations = rows[i].split(" - ");
-			if(wordExplanations.length < 3){
-				boolean allMatch = true;
-				char base = findUpperCase(wordExplanation[0]); 
-				for(int j = 1; j < 3; j++){
-					if(base != findUpperCase(wordExplanation[i])){
-						allMatch=false;	
-						break;
-					}
-				}
-			}
-			if(allMatch){
-				message += (i+1);
-			}
-			else{
-				message = "Совпадений нет. Верный ответ: 0";
-			}
+			String row = rows[i];
+			char base = findUpperCase(getBeforeDot(row));
+			if(base == '\0') continue;
+			boolean allMatch = true;
 			
+			while(!row.isEmpty()){
+				String currentWord = getBeforeDot(row);
+				if(base != findUpperCase(currentWord)){
+					allMatch = false;
+					break;
+				}
+				row = removeBeforeDot(row);
+			}
+			if(allMatch) message += (i+1);
 		}
+		if(message.isEmpty()) message = "Совпадений нет. Верный ответ: 0";
 		return message;
 	}
 
-	private char findUpperCase(String text){
+	private static char findUpperCase(String text){
 		for(char c : text.toCharArray()){
 			if(Character.isUpperCase(c)) return c;
 		}
 		return '\0';
+	}
+	private static String getBeforeDot(String text){
+		return text.substring(0, text.indexOf(".")).strip().split(" ")[0];
+	}
+	private static String removeBeforeDot(String text){
+		return text.substring(text.indexOf(".") + 1).strip();
 	}
 
 }
@@ -124,7 +126,8 @@ class Number9{
 
 		}
 		System.out.println(message);
-		System.out.println(values);
+		//System.out.println(values);
+		System.out.println(MainFunctional.findAnswer(values));
 		return message;
 	}
 }
