@@ -13,8 +13,13 @@ public class RusBooster extends TelegramLongPollingBot{
 	private static final String BOT_TOKEN = loadToken();
 	private static final String BOT_NAME = "RusBooster";
 
+	private long chatId;
+	private long userId;
+	private String messageText;
+
 	ReplyKeyboard botMenu = new ReplyKeyboard();
 	AdminCommands adminCommands = new AdminCommands();
+	MainFunctional functional = new MainFunctional();
 
 	@Override
 	public String getBotUsername(){
@@ -28,10 +33,21 @@ public class RusBooster extends TelegramLongPollingBot{
 
 	@Override
 	public void onUpdateReceived(Update update){
-		String messageText = update.getMessage().getText();
-		long userId = update.getMessage().getFrom().getId();
-		long chatId = update.getMessage().getChatId();
 
+		if(update.hasMessage() && update.getMessage().hasText()){
+			messageText = update.getMessage().getText();
+			userId = update.getMessage().getFrom().getId();
+			chatId = update.getMessage().getChatId();
+		}
+
+		if(update.hasCallbackQuery() && update.getCallbackQuery().getData() != null){	
+			String callbackData = update.getCallbackQuery().getData();
+			long callbackChatId = update.getCallbackQuery().getMessage().getChatId();
+			if("showExplanations".equals(callbackData)){
+				try{this.execute(functional.showExplanations(callbackChatId));}
+				catch(TelegramApiException e){e.printStackTrace();}
+			}
+		}
 
 		if(messageText.contains("/adm") && userId == 5459965917L){
 			try{

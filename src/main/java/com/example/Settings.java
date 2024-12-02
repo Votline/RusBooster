@@ -1,5 +1,3 @@
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-
 import java.sql.PreparedStatement;
 import java.sql.DriverManager;
 import java.sql.SQLException;

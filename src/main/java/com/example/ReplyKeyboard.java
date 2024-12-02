@@ -7,6 +7,7 @@ import java.sql.ResultSet;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
@@ -31,13 +32,13 @@ public class ReplyKeyboard{
 
 	public void createMenu(TelegramLongPollingBot bot, Message message){
 		String messageText = message.getText();
-
 		long chatId = message.getChatId();
 		long userId = message.getFrom().getId();
 		String userName = message.getFrom().getFirstName();
 		if(message.getFrom().getLastName() != null){userName += message.getFrom().getLastName();}
 		this.messageMenu.setChatId(String.valueOf(chatId));
-		
+		this.messageMenu.setReplyMarkup(null);
+
 		if(messageText.equals("Выбрать задание")){
 			this.messageMenu = check.createMenu(chatId, userId);
 			isChoosing = true;
@@ -64,7 +65,7 @@ public class ReplyKeyboard{
 			}
 
 			if(isChecking){
-				this.messageMenu.setText(functional.explanationTask());
+				this.messageMenu = functional.explanationTask(chatId);
 				isChecking = false;
 			}
 		}
