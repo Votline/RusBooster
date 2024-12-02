@@ -24,7 +24,8 @@ public class MainFunctional{
 	private int task_Id;
 	private String sql;
 
-	String returnMessage;
+	private static String answer;
+	private String returnMessage;
 	private Random random = new Random();
 	private List<TaskMap> wordsForTask = new ArrayList<>();
 
@@ -58,19 +59,23 @@ public class MainFunctional{
 			case 9:
 				Number9 newTask = new Number9();
 				returnMessage = newTask.createTask(random, wordsForTask);
+				
 				break;
 			default:
 				returnMessage = "Такого задания ещё нет в RusBooster";
 				System.out.println(task_Id);
 				break;
-
 		}
 		return returnMessage;
 	}
 
+	public String explanationTask(){
+		String message = "Ответ на задание №" + task_Id + ": " + answer;
+		return message;
+	}
 
 	public static String findAnswer(String values){
-		String message = "";
+		answer = "";
 		String[] rows = values.strip().split("\n");
 		
 		for(int i = 0; i < rows.length; i++){
@@ -87,10 +92,10 @@ public class MainFunctional{
 				}
 				row = removeBeforeDot(row);
 			}
-			if(allMatch) message += (i+1);
+			if(allMatch) answer += (i+1 + "\n" + row);
 		}
-		if(message.isEmpty()) message = "Совпадений нет. Верный ответ: 0";
-		return message;
+		if(answer.isEmpty()) answer = "Совпадений нет. Верный ответ: 0";
+		return answer;
 	}
 
 	private static char findUpperCase(String text){

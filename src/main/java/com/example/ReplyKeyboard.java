@@ -24,6 +24,7 @@ public class ReplyKeyboard{
 	private SendMessage messageMenu = new SendMessage();
 
 	private boolean isChoosing = false;
+	private boolean isChecking = false;
 	private Settings settings = new Settings();
 	private Statistic statistic = new Statistic();
 	private MainFunctional functional = new MainFunctional();
@@ -43,23 +44,28 @@ public class ReplyKeyboard{
 		}
 		else if(messageText.equals("Проверить знания")){
 			this.messageMenu.setText(functional.makeTask(userId));
+			isChecking = true;
 		}
 		else if(messageText.equals("Статистика")){
 			this.messageMenu.setText(statistic.getStatistic(userName, userId));
 		}
 		else{
+
 			this.messageMenu = main.createMenu(chatId);
+			
 			try{
 				if(isChoosing){
- 					if (Integer.parseInt(messageText) <= 26 &&  Integer.parseInt(messageText) >= 1){
-						settings.chooseExercise(userId, Integer.parseInt(messageText));
-						System.out.println("Делегировал " + messageText + " to Settings.java");
-					}
+					settings.chooseExercise(userId, messageText);
 					isChoosing = false;
 				}
 			}
 			catch(NumberFormatException e){
 				e.printStackTrace();
+			}
+
+			if(isChecking){
+				this.messageMenu.setText(functional.explanationTask());
+				isChecking = false;
 			}
 		}
 
