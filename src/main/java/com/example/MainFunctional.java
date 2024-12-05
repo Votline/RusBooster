@@ -1,5 +1,8 @@
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
 import java.sql.PreparedStatement;
@@ -30,6 +33,7 @@ public class MainFunctional{
 	private String sql;
 
 	private static String answer;
+	private static int answerForTask;
 	private static String explanations;
 
 	private String returnMessage;
@@ -78,7 +82,7 @@ public class MainFunctional{
 		return returnMessage;
 	}
 
-	public SendMessage explanationTask(long chatId){
+	public SendMessage explanationTask(long chatId, long userId, String message){
 		SendMessage sendMessage = new SendMessage();
 		sendMessage.setChatId(String.valueOf(chatId));
 		sendMessage.setText("Ответ на задание №" + task_Id + ": " + answer);
@@ -91,25 +95,82 @@ public class MainFunctional{
 		keyboard.setKeyboard(Collections.singletonList(Collections.singletonList(showAllExplanations)));
 		sendMessage.setReplyMarkup(keyboard);
 
+		try{checkAnswer(Integer.parseInt(message), userId);}
+		catch(NumberFormatException e){e.printStackTrace();}
+
 		return sendMessage;
 	}
-	public SendMessage showExplanations(long chatId){
-		System.out.println(explanations);
-		SendMessage sendMessage = new SendMessage();
-		System.out.println("2");
-		sendMessage.setChatId(String.valueOf(chatId));
-		System.out.println("3");
-		sendMessage.setText(explanations);
-		System.out.println("4");
 
-		System.out.println(explanations);
-		System.out.println("5");
+
+	private void checkAnswer(int userAnswer, long userId){
+
+		try(Connection conn = DriverManager.getConnection(urlStat)){
+			int current_task = 0, current_score = 0, baddest_task = 0, baddest_score = 0, better_task = 0, better_score = 0;
+			sql = "SELECT current_task, current_score, baddest_task, baddest_score, better_task, better_score FROM statistics WHERE user_id = ?";
+			PreparedStatement pstmt = conn.prepareStatement(sql);
+			pstmt.setLong(1, userId);
+			ResultSet result = pstmt.executeQuery();
+
+			while(result.next()){
+				current_task = result.getInt("current_task");
+				current_score = result.getInt("current_score");	
+				baddest_task = result.getInt("baddest_task");	
+				baddest_score = result.getInt("baddest_score");	
+				better_task = result.getInt("better_task");	
+				better_score = result.getInt("better_score");	
+			}
+
+			if(userAnswer == answerForTask){current_score += 1;}
+			else{current_score -= 1;}
+
+			if(current_score < baddest_score){
+				baddest_score = current_score;
+				baddest_task = current_task;
+			}
+			if(current_score > better_score){
+				better_score = current_score;
+				better_task = current_task;
+			}
+
+			sql = "UPDATE statistics SET current_score = ?, baddest_task = ?, baddest_score = ?, better_task = ?, better_score = ? WHERE user_id = ?";
+			PreparedStatement pstmtUpd = conn.prepareStatement(sql);
+			pstmtUpd.setInt(1, current_score);
+			pstmtUpd.setInt(2, baddest_task);
+			pstmtUpd.setInt(3, baddest_score);
+			pstmtUpd.setInt(4, better_task);
+			pstmtUpd.setInt(5, better_score);
+			pstmtUpd.setLong(6, userId);
+			System.out.println(pstmtUpd.executeUpdate());
+		}
+		catch(SQLException e ){
+			e.printStackTrace();
+		}
+	}
+
+	public SendMessage showExplanations(long chatId){
+		SendMessage sendMessage = new SendMessage();
+		sendMessage.setChatId(String.valueOf(chatId));
+		sendMessage.setText(explanations);
+
+		ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
+		keyboardMarkup.setResizeKeyboard(true);
+
+		List<KeyboardRow> keyboard = new ArrayList<>();
+		KeyboardRow row = new KeyboardRow();
+		row.add(new KeyboardButton("Выбрать задание"));
+		row.add(new KeyboardButton("Проверить знания"));
+		row.add(new KeyboardButton("Статистика"));
+		keyboard.add(row);
 		
+		keyboardMarkup.setKeyboard(keyboard);
+		sendMessage.setReplyMarkup(keyboardMarkup);
+
 		return sendMessage;
 	}
 
 
 	public static String findAnswer(String values){
+		answerForTask = 0;
 		answer = "";
 		explanations = values;
 		String[] rows = values.strip().split("\n");
@@ -128,9 +189,18 @@ public class MainFunctional{
 				}
 				row = removeBeforeDot(row);
 			}
-			if(allMatch) answer += (i+1 + "\n" + rows[i]);
+			if(allMatch) {
+				answer += "\n" + rows[i];
+				answerForTask += i+1;
+			}
 		}
-		if(answer.isEmpty()) answer = "Совпадений нет. Верный ответ: 0";
+		if(answer.isEmpty()) {
+			answer = "Совпадений нет. Верный ответ: 0";
+			answerForTask = 0;
+		}
+		else{
+			answer = answerForTask + answer;
+		}
 		return answer;
 	}
 
@@ -168,8 +238,6 @@ class Number9{
 			explanations += "\n";
 
 		}
-		System.out.println(message);
-		//System.out.println(explanations);
 		System.out.println(MainFunctional.findAnswer(explanations));
 		return message;
 	}

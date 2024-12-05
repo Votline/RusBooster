@@ -17,7 +17,7 @@ public class Settings{
 		if(numberOfExercise <= 26 && numberOfExercise >= 1){
 			try(Connection conn = DriverManager.getConnection(url)){
 				statistic.createTable();
-				sql = "INSERT OR REPLACE INTO statistics (user_id, current_task) VALUES (?, ?)";
+				sql = "UPDATE statistics SET user_id = ?, current_task = ?";
 				PreparedStatement pstmt = conn.prepareStatement(sql);
 				pstmt.setLong(1, userId);
 				pstmt.setInt(2, numberOfExercise);

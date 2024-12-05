@@ -13,6 +13,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 
 import java.util.List;
@@ -39,40 +40,44 @@ public class ReplyKeyboard{
 		this.messageMenu.setChatId(String.valueOf(chatId));
 		this.messageMenu.setReplyMarkup(null);
 
-		if(messageText.equals("Выбрать задание")){
+		if(messageText.equals("Выбрать задание") && !isChoosing && !isChecking){
 			this.messageMenu = check.createMenu(chatId, userId);
 			isChoosing = true;
 		}
-		else if(messageText.equals("Проверить знания")){
-			this.messageMenu.setText(functional.makeTask(userId));
-			isChecking = true;
+		else if(messageText.equals("Проверить знания") && !isChoosing){
+
+			String textForMenu = functional.makeTask(userId);
+			if(textForMenu != "Такого задания ещё нет в RusBooster") {
+				isChecking = true;
+				ReplyKeyboardRemove keyboardRemove = new ReplyKeyboardRemove(true);
+				this.messageMenu.setReplyMarkup(keyboardRemove);
+			}
+			this.messageMenu.setText(textForMenu);
 		}
-		else if(messageText.equals("Статистика")){
+		else if(messageText.equals("Статистика") && !isChecking && !isChoosing){
 			this.messageMenu.setText(statistic.getStatistic(userName, userId));
 		}
 		else{
-
 			this.messageMenu = main.createMenu(chatId);
 			
 			try{
 				if(isChoosing){
-					settings.chooseExercise(userId, messageText);
 					isChoosing = false;
+					settings.chooseExercise(userId, messageText);
 				}
 			}
 			catch(NumberFormatException e){
 				e.printStackTrace();
 			}
-
 			if(isChecking){
-				this.messageMenu = functional.explanationTask(chatId);
 				isChecking = false;
+				this.messageMenu = functional.explanationTask(chatId, userId, messageText);
 			}
 		}
 
 		try{bot.execute(this.messageMenu); }
 		catch(TelegramApiException e){e.printStackTrace(); }
-	}
+}
 
 }
 
