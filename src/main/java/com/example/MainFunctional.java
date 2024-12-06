@@ -173,7 +173,7 @@ public class MainFunctional{
 		answerForTask = 0;
 		answer = "";
 		explanations = values;
-		String[] rows = values.strip().split("\n");
+		String[] rows = values.strip().split("\n\n\n");
 		
 		for(int i = 0; i < rows.length; i++){
 			String row = rows[i];
@@ -223,7 +223,7 @@ public class MainFunctional{
 class Number9{
 	public static String createTask(Random random, List<TaskMap> task){
 		String message = "\n";
-		String explanations = "\n";
+		String explanations = "";
 		for(int i = 1; i <= 5; i++){
 			message += String.valueOf(i) + ") ";
 			for(int j = 1; j <= 3; j++){
@@ -232,12 +232,13 @@ class Number9{
 				String value = task.get(randomIndex).value;
 				task.remove(randomIndex);
 				message += key + " ";
-				explanations += value + " ";
+				explanations += "\n" + value + "\n";
 			}	
 			message += "\n";
 			explanations += "\n";
 
 		}
+		System.out.println(explanations);
 		System.out.println(MainFunctional.findAnswer(explanations));
 		return message;
 	}
