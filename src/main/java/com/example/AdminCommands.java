@@ -20,11 +20,11 @@ public class AdminCommands{
 
 		}
 		else if(messageText.contains("/showall")){
-			message.setText(words.showAllBase());
+			String task_id = parts[2];
+			message.setText(words.showAllBase(task_id));
 		}
 		else{
 			String text = "Команды: " + "\"" + parts[1] + "\"" +  " не существует";
-			System.out.println("Вывел ошибку: " + text);
 			message.setText(text);
 		}
 		return message;

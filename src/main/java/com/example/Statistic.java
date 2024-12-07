@@ -15,11 +15,12 @@ public class Statistic{
 		try(Connection conn = DriverManager.getConnection(url)){
 			sql = "CREATE TABLE IF NOT EXISTS statistics ("+
 				"user_id LONG NOT NULL UNIQUE," +
-				"current_task INTEGER,"+
-				"baddest_task STRING DEFAULT '1'," +
-				"baddest_score INTEGER," +
-				"better_task STRING DEFAULT '2'," +
-				"better_score INTEGER," +
+				"current_task INTEGER DEFAULT 0," +
+				"current_score INTEGER DEFAULT 0," +
+				"baddest_task INTEGER DEFAULT '0'," +
+				"baddest_score INTEGER DEFAULT 0," +
+				"better_task INTEGER DEFAULT '0'," +
+				"better_score INTEGER DEFAULT 0," +
 				"streak INTEGER" +
 			");";
 			Statement stmt = conn.createStatement();
@@ -38,18 +39,20 @@ public class Statistic{
 			ResultSet result = pstmt.executeQuery();
 			if(result.next()){
 				message = "👋Привет " + userName + "!" +
-					"	\nТекущее задание: " + result.getString("current_task") +
-					"	\nНаихудшая успеваимость: №" + result.getString("baddest_task") + ", " + result.getInt("baddest_score") +
-					"	\nНаилучшая успеваимость: №" + result.getString("better_task") + ", " + result.getInt("better_score") +
+					"	\nТекущее задание: " + result.getInt("current_task") +
+					"	\nНаихудшая успеваимость: №" + result.getInt("baddest_task") + ", " + result.getInt("baddest_score") +
+					"	\nНаилучшая успеваимость: №" + result.getInt("better_task") + ", " + result.getInt("better_score") +
 					"\nТы занимаешься уже " + result.getInt("streak") + " дней подряд!👏";
+			}
+			else{
+				message = "Таблица " + "\"" + "statistics" + "\"" + " пуста для вашего userId.\nВыберите задания чтоб заполнить её!";
 			}
 		}
 		catch(SQLException e){
 			e.printStackTrace();
-			message = "Таблица " + "\"" + "statistics" + "\"" + " пуста для вашего userId";
+			message = "Таблица " + "\"" + "statistics" + "\"" + " пуста для вашего userId.\nВыберите задания чтоб заполнить её!";
 
 		}
-		System.out.println(message);
 		return message;
 	}
 }

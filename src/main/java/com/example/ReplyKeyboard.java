@@ -7,11 +7,13 @@ import java.sql.ResultSet;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 
 import java.util.List;
@@ -24,8 +26,10 @@ public class ReplyKeyboard{
 	private SendMessage messageMenu = new SendMessage();
 
 	private boolean isChoosing = false;
+	private boolean isChecking = false;
 	private Settings settings = new Settings();
 	private Statistic statistic = new Statistic();
+	private MainFunctional functional = new MainFunctional();
 
 	public void createMenu(TelegramLongPollingBot bot, Message message){
 		String messageText = message.getText();
@@ -33,34 +37,48 @@ public class ReplyKeyboard{
 		long chatId = message.getChatId();
 		long userId = message.getFrom().getId();
 		String userName = message.getFrom().getFirstName();
-		if(message.getFrom().getLastName() != null){userName += message.getFrom().getLastName();}
+		if(message.getFrom().getLastName() != null) userName += message.getFrom().getLastName();
+
 		this.messageMenu.setChatId(String.valueOf(chatId));
-		if(messageText.equals("Выбрать задание")){
+		this.messageMenu.setReplyMarkup(null);
+
+		if(messageText.equals("Выбрать задание") && !isChoosing && !isChecking){
 			this.messageMenu = check.createMenu(chatId, userId);
 			isChoosing = true;
 		}
-		else if(messageText.equals("Статистика")){
+		else if(messageText.equals("Проверить знания") && !isChoosing){
+
+			String textForMenu = functional.makeTask(userId);
+			if(textForMenu != "Такого задания ещё нет в RusBooster") {
+				isChecking = true;
+				ReplyKeyboardRemove keyboardRemove = new ReplyKeyboardRemove(true);
+				this.messageMenu.setReplyMarkup(keyboardRemove);
+			}
+			this.messageMenu.setText(textForMenu);
+		}
+		else if(messageText.equals("Статистика") && !isChecking && !isChoosing){
 			this.messageMenu.setText(statistic.getStatistic(userName, userId));
 		}
 		else{
 			this.messageMenu = main.createMenu(chatId);
 			try{
 				if(isChoosing){
- 					if (Integer.parseInt(messageText) <= 26 &&  Integer.parseInt(messageText) >= 1){
-						settings.chooseExercise(userId, Integer.parseInt(messageText));
-						System.out.println("Делегировал " + messageText + " to Settings.java");
-					}
 					isChoosing = false;
+					settings.chooseExercise(userId, messageText);
 				}
 			}
 			catch(NumberFormatException e){
 				e.printStackTrace();
 			}
+			if(isChecking){
+				isChecking = false;
+				this.messageMenu = functional.explanationTask(chatId, userId, messageText);
+			}
 		}
 
 		try{bot.execute(this.messageMenu); }
 		catch(TelegramApiException e){e.printStackTrace(); }
-	}
+}
 
 }
 

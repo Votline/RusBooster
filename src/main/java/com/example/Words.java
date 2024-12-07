@@ -20,7 +20,6 @@ public class Words{
 			");";
 			Statement stmt = conn.createStatement();
 			stmt.execute(sql);
-			System.out.println("Создал таблицу words ");
 		}
 		catch(SQLException e){
 			e.printStackTrace();
@@ -43,7 +42,6 @@ public class Words{
 			pstmt.setString(3, task_id);
 			pstmt.executeUpdate();
 			message = "Добавил слово " + name + ". Значение: " + explanation + ". Задание: " + task_id + ".";
-			System.out.println(message);
 		}
 		catch(SQLException e){
 			e.printStackTrace();
@@ -65,7 +63,6 @@ public class Words{
 			pstmt.setString(2, task_id);
 			pstmt.executeUpdate();
 			message = "Удалил слово " + name + " для задания " + task_id + " из базы данных.";
-			System.out.println(message);
 		}
 		catch(SQLException e){
 			e.printStackTrace();
@@ -74,18 +71,17 @@ public class Words{
 		return message;
 	}
 
-	public String showAllBase(){
+	public String showAllBase(String task_id){
 		try(Connection conn = DriverManager.getConnection(url)){
-			sql = "SELECT word, explanation, task_id FROM words";
-			Statement stmt = conn.createStatement();
-			ResultSet result = stmt.executeQuery(sql);
+			sql = "SELECT word, explanation FROM words WHERE task_id = ?";
+			PreparedStatement pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, task_id);
+			ResultSet result = pstmt.executeQuery();
 			message = "";
 			while(result.next()){
 				String word = result.getString("word");
 				String explanation = result.getString("explanation");
-				String task_id = result.getString("task_id");
 				message += "Слово: " + "\"" + word + "\"" + ". Значение: " + "\"" +  explanation + "\"" +  ". Номер задания: " + "\"" +  task_id + "\"" + "\n \n";
-				System.out.println(message);
 			}
 		}
 		catch(SQLException e){
