@@ -75,7 +75,6 @@ public class MainFunctional{
 				break;
 			default:
 				returnMessage = "Такого задания ещё нет в RusBooster";
-				System.out.println(task_Id);
 				break;
 		}
 
@@ -222,7 +221,7 @@ public class MainFunctional{
 }
 class Number9{
 	public static String createTask(Random random, List<TaskMap> task){
-		String message = "\n";
+		String message = "Укажите варианты ответов, в которых во всех словах одного ряда пропущена одна и та же буква. Запишите номера ответов. Если подходящих вариантов нет, напишите 0.\n";
 		String explanations = "";
 		for(int i = 1; i <= 5; i++){
 			message += String.valueOf(i) + ") ";
@@ -238,7 +237,6 @@ class Number9{
 			explanations += "\n";
 
 		}
-		System.out.println(explanations);
 		System.out.println(MainFunctional.findAnswer(explanations));
 		return message;
 	}

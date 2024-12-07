@@ -20,7 +20,6 @@ public class Words{
 			");";
 			Statement stmt = conn.createStatement();
 			stmt.execute(sql);
-			System.out.println("Создал таблицу words ");
 		}
 		catch(SQLException e){
 			e.printStackTrace();
@@ -43,7 +42,6 @@ public class Words{
 			pstmt.setString(3, task_id);
 			pstmt.executeUpdate();
 			message = "Добавил слово " + name + ". Значение: " + explanation + ". Задание: " + task_id + ".";
-			System.out.println(message);
 		}
 		catch(SQLException e){
 			e.printStackTrace();
@@ -65,7 +63,6 @@ public class Words{
 			pstmt.setString(2, task_id);
 			pstmt.executeUpdate();
 			message = "Удалил слово " + name + " для задания " + task_id + " из базы данных.";
-			System.out.println(message);
 		}
 		catch(SQLException e){
 			e.printStackTrace();
@@ -85,7 +82,6 @@ public class Words{
 				String word = result.getString("word");
 				String explanation = result.getString("explanation");
 				message += "Слово: " + "\"" + word + "\"" + ". Значение: " + "\"" +  explanation + "\"" +  ". Номер задания: " + "\"" +  task_id + "\"" + "\n \n";
-				System.out.println(message);
 			}
 		}
 		catch(SQLException e){

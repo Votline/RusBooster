@@ -33,10 +33,12 @@ public class ReplyKeyboard{
 
 	public void createMenu(TelegramLongPollingBot bot, Message message){
 		String messageText = message.getText();
+
 		long chatId = message.getChatId();
 		long userId = message.getFrom().getId();
 		String userName = message.getFrom().getFirstName();
-		if(message.getFrom().getLastName() != null){userName += message.getFrom().getLastName();}
+		if(message.getFrom().getLastName() != null) userName += message.getFrom().getLastName();
+
 		this.messageMenu.setChatId(String.valueOf(chatId));
 		this.messageMenu.setReplyMarkup(null);
 
@@ -59,7 +61,6 @@ public class ReplyKeyboard{
 		}
 		else{
 			this.messageMenu = main.createMenu(chatId);
-			
 			try{
 				if(isChoosing){
 					isChoosing = false;

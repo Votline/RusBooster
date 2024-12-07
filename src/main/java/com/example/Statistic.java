@@ -44,13 +44,15 @@ public class Statistic{
 					"	\nНаилучшая успеваимость: №" + result.getInt("better_task") + ", " + result.getInt("better_score") +
 					"\nТы занимаешься уже " + result.getInt("streak") + " дней подряд!👏";
 			}
+			else{
+				message = "Таблица " + "\"" + "statistics" + "\"" + " пуста для вашего userId.\nВыберите задания чтоб заполнить её!";
+			}
 		}
 		catch(SQLException e){
 			e.printStackTrace();
-			message = "Таблица " + "\"" + "statistics" + "\"" + " пуста для вашего userId";
+			message = "Таблица " + "\"" + "statistics" + "\"" + " пуста для вашего userId.\nВыберите задания чтоб заполнить её!";
 
 		}
-		System.out.println(message);
 		return message;
 	}
 }

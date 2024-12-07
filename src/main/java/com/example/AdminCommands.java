@@ -25,7 +25,6 @@ public class AdminCommands{
 		}
 		else{
 			String text = "Команды: " + "\"" + parts[1] + "\"" +  " не существует";
-			System.out.println("Вывел ошибку: " + text);
 			message.setText(text);
 		}
 		return message;
