@@ -16,6 +16,10 @@ import java.util.ArrayList;
 import java.util.Random;
 import java.util.List;
 
+interface newTask{
+	public static String createTask(Random random, List<TaskMap> task, int wordCount){ return "sdsd";}
+}
+
 class TaskMap{
 	protected String key;
 	protected String value;
@@ -67,11 +71,15 @@ public class MainFunctional{
 		catch(SQLException e){
 			e.printStackTrace();
 		}
-
+		
 		switch(task_Id){
 			case 9:
-				Number9 newTask = new Number9();
-				returnMessage = newTask.createTask(random, wordsForTask);
+			case 10:
+				returnMessage = Number9to12.createTask(random, wordsForTask, 3);
+				break;
+			case 11:
+			case 12:
+				returnMessage = Number9to12.createTask(random, wordsForTask, 2);
 				break;
 			default:
 				returnMessage = "Такого задания ещё нет в RusBooster";
@@ -219,13 +227,13 @@ public class MainFunctional{
 
 
 }
-class Number9{
-	public static String createTask(Random random, List<TaskMap> task){
+class Number9to12{
+	public static String createTask(Random random, List<TaskMap> task, int wordCount){
 		String message = "Укажите варианты ответов, в которых во всех словах одного ряда пропущена одна и та же буква. Запишите номера ответов. Если подходящих вариантов нет, напишите 0.\n";
 		String explanations = "";
 		for(int i = 1; i <= 5; i++){
 			message += String.valueOf(i) + ") ";
-			for(int j = 1; j <= 3; j++){
+			for(int j = 1; j <= wordCount; j++){
 				int randomIndex = random.nextInt(task.size());
 				String key = task.get(randomIndex).key;
 				String value = task.get(randomIndex).value;
