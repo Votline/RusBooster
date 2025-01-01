@@ -23,55 +23,54 @@ import java.io.IOException;
 public class ReplyKeyboard{
 	private MainKeyboard main = new MainKeyboard();
 	private CheckKeyboard check = new CheckKeyboard();
-	private SendMessage messageMenu = new SendMessage();
 
-	private boolean isChoosing = false;
-	private boolean isChecking = false;
 	private Settings settings = new Settings();
 	private Statistic statistic = new Statistic();
+	private SendMessage messageMenu = new SendMessage();
 	private MainFunctional functional = new MainFunctional();
-
+	
 	public void createMenu(TelegramLongPollingBot bot, Message message){
 		String messageText = message.getText();
 
 		long chatId = message.getChatId();
 		long userId = message.getFrom().getId();
 		String userName = message.getFrom().getFirstName();
+		
+		UserState userState = UserStateManager.getUserState(userId);
 		if(message.getFrom().getLastName() != null) userName += message.getFrom().getLastName();
 
 		this.messageMenu.setChatId(String.valueOf(chatId));
 		this.messageMenu.setReplyMarkup(null);
 
-		if(messageText.equals("Выбрать задание") && !isChoosing && !isChecking){
+		if(messageText.equals("Выбрать задание") && !userState.isChoosing && !userState.isChecking){
 			this.messageMenu = check.createMenu(chatId, userId);
-			isChoosing = true;
+			userState.isChoosing = true;
 		}
-		else if(messageText.equals("Проверить знания") && !isChoosing){
-
+		else if(messageText.equals("Проверить знания") && !userState.isChoosing){
 			String textForMenu = functional.makeTask(userId);
 			if(textForMenu != "Такого задания ещё нет в RusBooster") {
-				isChecking = true;
+				userState.isChecking = true;
 				ReplyKeyboardRemove keyboardRemove = new ReplyKeyboardRemove(true);
 				this.messageMenu.setReplyMarkup(keyboardRemove);
 			}
 			this.messageMenu.setText(textForMenu);
 		}
-		else if(messageText.equals("Статистика") && !isChecking && !isChoosing){
+		else if(messageText.equals("Статистика") && !userState.isChecking && !userState.isChoosing){
 			this.messageMenu.setText(statistic.getStatistic(userName, userId));
 		}
 		else{
 			this.messageMenu = main.createMenu(chatId);
 			try{
-				if(isChoosing){
-					isChoosing = false;
+				if(userState.isChoosing){
+					userState.isChoosing = false;
 					settings.chooseExercise(userId, messageText);
 				}
 			}
 			catch(NumberFormatException e){
 				e.printStackTrace();
 			}
-			if(isChecking){
-				isChecking = false;
+			if(userState.isChecking){
+				userState.isChecking = false;
 				this.messageMenu = functional.explanationTask(chatId, userId, messageText);
 			}
 		}

@@ -20,7 +20,7 @@ public class RusBooster extends TelegramLongPollingBot{
 	ReplyKeyboard botMenu = new ReplyKeyboard();
 	AdminCommands adminCommands = new AdminCommands();
 	MainFunctional functional = new MainFunctional();
-
+	
 	@Override
 	public String getBotUsername(){
 		return BOT_NAME;
@@ -47,6 +47,7 @@ public class RusBooster extends TelegramLongPollingBot{
 				try{this.execute(functional.showExplanations(callbackChatId));}
 				catch(TelegramApiException e){e.printStackTrace();}
 			}
+			return;
 		}
 
 		if(messageText.contains("/adm") && userId == 5459965917L){
