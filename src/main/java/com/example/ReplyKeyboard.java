@@ -29,7 +29,7 @@ public class ReplyKeyboard{
 	private SendMessage messageMenu = new SendMessage();
 	private MainFunctional functional = new MainFunctional();
 	
-	public void createMenu(TelegramLongPollingBot bot, Message message){
+	public SendMessage createMenu(Message message){
 		String messageText = message.getText();
 
 		long chatId = message.getChatId();
@@ -39,27 +39,28 @@ public class ReplyKeyboard{
 		UserState userState = UserStateManager.getUserState(userId);
 		if(message.getFrom().getLastName() != null) userName += message.getFrom().getLastName();
 
-		this.messageMenu.setChatId(String.valueOf(chatId));
-		this.messageMenu.setReplyMarkup(null);
+		messageMenu.setChatId(String.valueOf(chatId));
+		messageMenu.setReplyMarkup(null);
 
 		if(messageText.equals("Выбрать задание") && !userState.isChoosing && !userState.isChecking){
-			this.messageMenu = check.createMenu(chatId, userId);
+			messageMenu = check.createMenu(chatId, userId);
 			userState.isChoosing = true;
 		}
 		else if(messageText.equals("Проверить знания") && !userState.isChoosing){
-			String textForMenu = functional.makeTask(userId);
-			if(textForMenu != "Такого задания ещё нет в RusBooster") {
+			messageMenu = functional.makeTask(userId);
+			if(messageMenu.getText() != "Такого задания ещё нет в RusBooster") {
 				userState.isChecking = true;
-				ReplyKeyboardRemove keyboardRemove = new ReplyKeyboardRemove(true);
-				this.messageMenu.setReplyMarkup(keyboardRemove);
 			}
-			this.messageMenu.setText(textForMenu);
+			else{
+				messageMenu = main.createMenu(chatId);
+				messageMenu.setText("Такого задания ещё нет в RusBooster");
+			}
 		}
 		else if(messageText.equals("Статистика") && !userState.isChecking && !userState.isChoosing){
-			this.messageMenu.setText(statistic.getStatistic(userName, userId));
+			messageMenu.setText(statistic.getStatistic(userName, userId));
 		}
 		else{
-			this.messageMenu = main.createMenu(chatId);
+			messageMenu = main.createMenu(chatId);
 			try{
 				if(userState.isChoosing){
 					userState.isChoosing = false;
@@ -71,12 +72,10 @@ public class ReplyKeyboard{
 			}
 			if(userState.isChecking){
 				userState.isChecking = false;
-				this.messageMenu = functional.explanationTask(chatId, userId, messageText);
+				messageMenu = functional.explanationTask(chatId, userId, messageText);
 			}
 		}
-
-		try{bot.execute(this.messageMenu); }
-		catch(TelegramApiException e){e.printStackTrace(); }
+		return messageMenu;
 }
 
 }

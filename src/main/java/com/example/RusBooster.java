@@ -39,27 +39,37 @@ public class RusBooster extends TelegramLongPollingBot{
 			userId = update.getMessage().getFrom().getId();
 			chatId = update.getMessage().getChatId();
 		}
+		else if(update.hasCallbackQuery() && update.getCallbackQuery().getData() != null){
+			messageText = update.getCallbackQuery().getData();
+			userId = update.getCallbackQuery().getFrom().getId();
+			chatId = update.getCallbackQuery().getMessage().getChatId();
+		}
 
 		if(update.hasCallbackQuery() && update.getCallbackQuery().getData() != null){	
+			UserState userState = UserStateManager.getUserState(userId);
+
 			String callbackData = update.getCallbackQuery().getData();
 			long callbackChatId = update.getCallbackQuery().getMessage().getChatId();
+			
 			if("showExplanations".equals(callbackData)){
 				try{this.execute(functional.showExplanations(callbackChatId));}
 				catch(TelegramApiException e){e.printStackTrace();}
 			}
-			return;
+			
+			else if("cancelTask".equals(callbackData)){
+				userState.isChecking = false;
+				try{this.execute(botMenu.createMenu(update.getMessage()));}	
+				catch(TelegramApiException e){e.printStackTrace();}
+			}
 		}
 
 		if(messageText.contains("/adm") && userId == 5459965917L){
-			try{
-				this.execute(adminCommands.dataBase(messageText, chatId));
-			}
-			catch(TelegramApiException e){
-				e.printStackTrace();
-			}
+			try{this.execute(adminCommands.dataBase(messageText, chatId));}
+			catch(TelegramApiException e){e.printStackTrace();}
 		}
 		else if(messageText != null){
-			botMenu.createMenu(this, update.getMessage());
+			try{this.execute(botMenu.createMenu(update.getMessage()));}
+			catch(TelegramApiException e){e.printStackTrace();}
 		}
 	}
 	private static String loadToken() {

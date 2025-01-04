@@ -44,7 +44,7 @@ public class MainFunctional{
 	private Random random = new Random();
 	private List<TaskMap> wordsForTask = new ArrayList<>();
 
-	public String makeTask(long userId){
+	public SendMessage makeTask(long userId){
 		try(Connection connSet = DriverManager.getConnection(urlStat)){
 			sql = "SELECT current_task FROM statistics WHERE user_id = ?";
 			PreparedStatement pstmt = connSet.prepareStatement(sql);
@@ -91,16 +91,26 @@ public class MainFunctional{
 				returnMessage = "Такого задания ещё нет в RusBooster";
 				break;
 		}
+		SendMessage sendMessage = new SendMessage();
+		sendMessage.setChatId(String.valueOf(userId));
+		sendMessage.setText(returnMessage);
 
-		return returnMessage;
+		InlineKeyboardMarkup cancelKeyboard = new InlineKeyboardMarkup();
+		InlineKeyboardButton cancelButton = new InlineKeyboardButton();
+		
+		cancelButton.setText("Отказаться от задания");
+		cancelButton.setCallbackData("cancelTask");
+		
+		cancelKeyboard.setKeyboard(Collections.singletonList(Collections.singletonList(cancelButton)));
+		sendMessage.setReplyMarkup(cancelKeyboard);
+
+		return sendMessage;
 	}
 
 	public SendMessage explanationTask(long chatId, long userId, String message){
 		SendMessage sendMessage = new SendMessage();
 		sendMessage.setChatId(String.valueOf(chatId));
 		sendMessage.setText("Ответ на задание №" + task_Id + ": " + answer);
-		System.out.println("explanationTask: текущие пояснения: " + explanations);
-
 
 		InlineKeyboardButton showAllExplanations = new InlineKeyboardButton();
 		showAllExplanations.setText("Показать пояснения всех слов");
@@ -143,8 +153,6 @@ public class MainFunctional{
 
 			if(userAnswer == answerForTask){current_score += 1;}
 			else{current_score -= 1;}
-			System.out.println(userAnswer);
-			System.out.println(answerForTask);
 
 			if(current_score < baddest_score){
 				baddest_score = current_score;
@@ -207,17 +215,14 @@ public class MainFunctional{
 		else{
 			answer = answerForOutput + answer;
 		}
-		System.out.println(answerForOutput);
-		System.out.println("findAnswer: текущие пояснения: " + explanations);
+
 		return answer;
 	}
 
 
 	
 	public SendMessage showExplanations(long chatId){
-		System.out.println("Вызван метод showExplanations");
 		String savedExplanations = UserStateManager.getUserState(chatId).explanations;
-		System.out.println("Загруженные пояснения: " + savedExplanations);
 
 		SendMessage sendMessage = new SendMessage();
 		sendMessage.setChatId(String.valueOf(chatId));
