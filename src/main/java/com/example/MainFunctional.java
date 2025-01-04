@@ -16,10 +16,6 @@ import java.util.ArrayList;
 import java.util.Random;
 import java.util.List;
 
-interface newTask{
-	public static String createTask(Random random, List<TaskMap> task, int wordCount){ return "sdsd";}
-}
-
 class TaskMap{
 	protected String key;
 	protected String value;
@@ -38,7 +34,6 @@ public class MainFunctional{
 
 	private String answer;
 	private int answerForTask;
-	private String explanations;
 
 	private String returnMessage;
 	private Random random = new Random();
@@ -85,7 +80,7 @@ public class MainFunctional{
 				result = Number9to12.createTask(this, random, wordsForTask, 2);
 				returnMessage = result.message;
 				answer = result.answer;
-				explanations = result.explanations;
+				UserStateManager.getUserState(userId).explanations = result.explanations;
 				break;
 			default:
 				returnMessage = "Такого задания ещё нет в RusBooster";

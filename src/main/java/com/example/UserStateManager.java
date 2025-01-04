@@ -9,7 +9,7 @@ public class UserStateManager{
 }
 
 class UserState{
-	boolean isChoosing = true;
+	boolean isChoosing = false;
 	boolean isChecking = false;
 	int currentTask = 0;
 	String lastQuestion = null;

@@ -39,28 +39,26 @@ public class RusBooster extends TelegramLongPollingBot{
 			userId = update.getMessage().getFrom().getId();
 			chatId = update.getMessage().getChatId();
 		}
-		else if(update.hasCallbackQuery() && update.getCallbackQuery().getData() != null){
-			messageText = update.getCallbackQuery().getData();
-			userId = update.getCallbackQuery().getFrom().getId();
-			chatId = update.getCallbackQuery().getMessage().getChatId();
-		}
-
+		
 		if(update.hasCallbackQuery() && update.getCallbackQuery().getData() != null){	
 			UserState userState = UserStateManager.getUserState(userId);
 
 			String callbackData = update.getCallbackQuery().getData();
 			long callbackChatId = update.getCallbackQuery().getMessage().getChatId();
+			long callbackUserId = update.getCallbackQuery().getFrom().getId();
 			
 			if("showExplanations".equals(callbackData)){
 				try{this.execute(functional.showExplanations(callbackChatId));}
 				catch(TelegramApiException e){e.printStackTrace();}
+				return;
 			}
-			
 			else if("cancelTask".equals(callbackData)){
 				userState.isChecking = false;
-				try{this.execute(botMenu.createMenu(update.getMessage()));}	
-				catch(TelegramApiException e){e.printStackTrace();}
 			}
+			try{this.execute(botMenu.createMenu(update.getMessage(), callbackChatId, callbackUserId));}	
+			catch(TelegramApiException e){e.printStackTrace();}
+
+			return;
 		}
 
 		if(messageText.contains("/adm") && userId == 5459965917L){
@@ -68,7 +66,7 @@ public class RusBooster extends TelegramLongPollingBot{
 			catch(TelegramApiException e){e.printStackTrace();}
 		}
 		else if(messageText != null){
-			try{this.execute(botMenu.createMenu(update.getMessage()));}
+			try{this.execute(botMenu.createMenu(update.getMessage(), chatId, userId));}
 			catch(TelegramApiException e){e.printStackTrace();}
 		}
 	}

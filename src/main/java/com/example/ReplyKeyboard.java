@@ -16,9 +16,16 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
+
+
 import java.util.List;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+
 
 public class ReplyKeyboard{
 	private MainKeyboard main = new MainKeyboard();
@@ -29,15 +36,17 @@ public class ReplyKeyboard{
 	private SendMessage messageMenu = new SendMessage();
 	private MainFunctional functional = new MainFunctional();
 	
-	public SendMessage createMenu(Message message){
-		String messageText = message.getText();
+	public SendMessage createMenu(Message message, long chatId, long userId){
+		String messageText = "";
+		String userName = "";
 
-		long chatId = message.getChatId();
-		long userId = message.getFrom().getId();
-		String userName = message.getFrom().getFirstName();
-		
+		if(message != null){
+			messageText = message.getText();
+			userName = message.getFrom().getFirstName();
+		}
+
 		UserState userState = UserStateManager.getUserState(userId);
-		if(message.getFrom().getLastName() != null) userName += message.getFrom().getLastName();
+		if(message != null && message.getFrom().getLastName() != null) {userName += message.getFrom().getLastName();}
 
 		messageMenu.setChatId(String.valueOf(chatId));
 		messageMenu.setReplyMarkup(null);
@@ -59,12 +68,14 @@ public class ReplyKeyboard{
 		else if(messageText.equals("Статистика") && !userState.isChecking && !userState.isChoosing){
 			messageMenu.setText(statistic.getStatistic(userName, userId));
 		}
+
 		else{
 			messageMenu = main.createMenu(chatId);
 			try{
 				if(userState.isChoosing){
 					userState.isChoosing = false;
-					settings.chooseExercise(userId, messageText);
+					messageMenu.setText(settings.chooseExercise(userId, messageText));
+					//messageMenu.setReplyMarkup(null);
 				}
 			}
 			catch(NumberFormatException e){
@@ -112,31 +123,36 @@ class CheckKeyboard{
 		message.setChatId(String.valueOf(chatId));
 		message.setText("Напишите номер упражнения от 1 до 26: ");
 
-		ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
-		keyboardMarkup.setResizeKeyboard(true);
-		List<KeyboardRow> keyboard = new ArrayList<>();
-		KeyboardRow row2 = new KeyboardRow();
+		InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
+		InlineKeyboardButton baddestTask = new InlineKeyboardButton();
+		InlineKeyboardButton cancelChoose = new InlineKeyboardButton();
+
+		cancelChoose.setText("В главное меню");
+		cancelChoose.setCallbackData("cancelChoose");
+		baddestTask.setCallbackData("baddestTask");
 
 		try(Connection conn = DriverManager.getConnection(url)){
-			sql = "SELECT current_task FROM statistics WHERE user_id = ?";
+			sql = "SELECT baddest_task FROM statistics WHERE user_id = ?";
 			PreparedStatement pstmt = conn.prepareStatement(sql);
 			pstmt.setLong(1, userId);
 			ResultSet result = pstmt.executeQuery();
 			if(result.next()){
-				KeyboardRow row1 = new KeyboardRow();
-				row1.add(new KeyboardButton("Текущее задание: " + result.getString("current_task") ));
-				keyboard.add(row1);
+				if(result.getInt("baddest_task") != 0){
+					baddestTask.setText("Наихудшая успеваимость: №" + result.getInt("baddest_task"));
+					keyboardMarkup.setKeyboard(Arrays.asList(
+						Collections.singletonList(baddestTask),
+						Collections.singletonList(cancelChoose)
+					));
+				}
+				else{
+					keyboardMarkup.setKeyboard(Collections.singletonList(Collections.singletonList(cancelChoose)));
+				}
 			}
 		}
 		catch(SQLException e){
 			e.printStackTrace();
 		}
-		row2.add(new KeyboardButton("Назад"));
-		keyboard.add(row2);
-
-		keyboardMarkup.setKeyboard(keyboard);
 		message.setReplyMarkup(keyboardMarkup);
-
 		return message;
 	}
 }

@@ -5,7 +5,6 @@ Settings.class
 Statistic.class
 TaskResult.class
 AdminCommands.class
-newTask.class
 Main.class
 RusBooster.class
 MainFunctional.class

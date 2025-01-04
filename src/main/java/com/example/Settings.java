@@ -5,14 +5,13 @@ import java.sql.Connection;
 import java.sql.Statement;
 
 public class Settings{
-	private String messageText;
 
 	private String url = "jdbc:sqlite:" + System.getProperty("user.dir") + "/statistic.db";
 	private String sql;
 
 	private Statistic statistic = new Statistic();
 
-	public void chooseExercise(long userId, String message){
+	public String chooseExercise(long userId, String message){
 		int numberOfExercise = Integer.parseInt(message);
 		if(numberOfExercise <= 26 && numberOfExercise >= 1){
 			try(Connection conn = DriverManager.getConnection(url)){
@@ -26,6 +25,10 @@ public class Settings{
 			catch(SQLException e){
 				e.printStackTrace();
 			}
+			return "Текущее задание: №" + numberOfExercise;
+		}
+		else{
+			return "Выберите задание от 1 до 26";
 		}
 	}
 }
