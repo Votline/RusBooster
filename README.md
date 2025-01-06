@@ -12,7 +12,7 @@
 **Установка и запуск:**  
 
 * RusBooster доступен для использования в Telegram. 
-Чтобы начать пользоваться ботом, просто найдите бота по ID: "@RusBooster_bot" и отправьте команду /start.
+Чтобы начать пользоваться ботом, просто найдите его по ID: "@RusBooster_bot" и напишите любое сообщение.
 
 ## Технологии
 * Java: Основной язык программирования
@@ -39,7 +39,7 @@ The bot offers Russian language practice exercises tailored to the ЕГЭ format
 **Installation and Launch:**  
 
 * RusBooster is available for use on Telegram.  
-To start using the bot, simply find it by ID: "@RusBooster_bot" and send the command /start.
+To start using the bot, just search for it by ID: "@RusBooster_bot" and write any message.
 
 ## Technologies
 * Java: Main programming language

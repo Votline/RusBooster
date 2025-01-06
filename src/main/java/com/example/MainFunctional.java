@@ -32,15 +32,14 @@ public class MainFunctional{
 	private int task_Id;
 	private String sql;
 
-	private static String answer;
-	private static int answerForTask;
-	private static String explanations;
+	private String answer;
+	private int answerForTask;
 
 	private String returnMessage;
 	private Random random = new Random();
 	private List<TaskMap> wordsForTask = new ArrayList<>();
 
-	public String makeTask(long userId){
+	public SendMessage makeTask(long userId){
 		try(Connection connSet = DriverManager.getConnection(urlStat)){
 			sql = "SELECT current_task FROM statistics WHERE user_id = ?";
 			PreparedStatement pstmt = connSet.prepareStatement(sql);
@@ -67,18 +66,40 @@ public class MainFunctional{
 		catch(SQLException e){
 			e.printStackTrace();
 		}
-
+		
 		switch(task_Id){
 			case 9:
-				Number9 newTask = new Number9();
-				returnMessage = newTask.createTask(random, wordsForTask);
+			case 10:
+				TaskResult result = Number9to12.createTask(this, random, wordsForTask, 3);
+				returnMessage = result.message;
+				answer = result.answer;
+				UserStateManager.getUserState(userId).explanations = result.explanations;
+				break;
+			case 11:
+			case 12:
+				result = Number9to12.createTask(this, random, wordsForTask, 2);
+				returnMessage = result.message;
+				answer = result.answer;
+				UserStateManager.getUserState(userId).explanations = result.explanations;
 				break;
 			default:
 				returnMessage = "Такого задания ещё нет в RusBooster";
 				break;
 		}
+		SendMessage sendMessage = new SendMessage();
+		sendMessage.setChatId(String.valueOf(userId));
+		sendMessage.setText(returnMessage);
 
-		return returnMessage;
+		InlineKeyboardMarkup cancelKeyboard = new InlineKeyboardMarkup();
+		InlineKeyboardButton cancelButton = new InlineKeyboardButton();
+		
+		cancelButton.setText("Отказаться от задания");
+		cancelButton.setCallbackData("cancelTask");
+		
+		cancelKeyboard.setKeyboard(Collections.singletonList(Collections.singletonList(cancelButton)));
+		sendMessage.setReplyMarkup(cancelKeyboard);
+
+		return sendMessage;
 	}
 
 	public SendMessage explanationTask(long chatId, long userId, String message){
@@ -92,11 +113,21 @@ public class MainFunctional{
 
 		InlineKeyboardMarkup keyboard = new InlineKeyboardMarkup();
 		keyboard.setKeyboard(Collections.singletonList(Collections.singletonList(showAllExplanations)));
-		sendMessage.setReplyMarkup(keyboard);
 
-		try{checkAnswer(Integer.parseInt(message), userId);}
-		catch(NumberFormatException e){e.printStackTrace();}
-
+		try{
+			int number = Integer.parseInt(message);
+			int userAnswer = 0;
+			while(number != 0){
+				userAnswer += number % 10;
+				number /= 10;}
+			checkAnswer(userAnswer, userId);
+			sendMessage.setReplyMarkup(keyboard);
+		}
+		catch(NumberFormatException e){
+			e.printStackTrace();
+			sendMessage.setText("Укажите варианты ответов числом");
+			UserStateManager.getUserState(userId).isChecking = true;
+		}
 		return sendMessage;
 	}
 
@@ -139,39 +170,21 @@ public class MainFunctional{
 			pstmtUpd.setInt(4, better_task);
 			pstmtUpd.setInt(5, better_score);
 			pstmtUpd.setLong(6, userId);
-			System.out.println(pstmtUpd.executeUpdate());
+			pstmtUpd.executeUpdate();
 		}
 		catch(SQLException e ){
 			e.printStackTrace();
 		}
 	}
 
-	public SendMessage showExplanations(long chatId){
-		SendMessage sendMessage = new SendMessage();
-		sendMessage.setChatId(String.valueOf(chatId));
-		sendMessage.setText(explanations);
-
-		ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
-		keyboardMarkup.setResizeKeyboard(true);
-
-		List<KeyboardRow> keyboard = new ArrayList<>();
-		KeyboardRow row = new KeyboardRow();
-		row.add(new KeyboardButton("Выбрать задание"));
-		row.add(new KeyboardButton("Проверить знания"));
-		row.add(new KeyboardButton("Статистика"));
-		keyboard.add(row);
-		
-		keyboardMarkup.setKeyboard(keyboard);
-		sendMessage.setReplyMarkup(keyboardMarkup);
-
-		return sendMessage;
-	}
-
-
-	public static String findAnswer(String values){
-		answerForTask = 0;
+	public String findAnswer(String values){
+		if(values == null){
+			answer = "Ошика, нет значений для поиска";
+			return answer;
+		}
 		answer = "";
-		explanations = values;
+		answerForTask = 0;
+		String answerForOutput = "";
 		String[] rows = values.strip().split("\n\n\n");
 		
 		for(int i = 0; i < rows.length; i++){
@@ -191,6 +204,7 @@ public class MainFunctional{
 			if(allMatch) {
 				answer += "\n" + rows[i];
 				answerForTask += i+1;
+				answerForOutput += String.valueOf(i+1);
 			}
 		}
 		if(answer.isEmpty()) {
@@ -198,9 +212,35 @@ public class MainFunctional{
 			answerForTask = 0;
 		}
 		else{
-			answer = answerForTask + answer;
+			answer = answerForOutput + answer;
 		}
+
 		return answer;
+	}
+
+
+	
+	public SendMessage showExplanations(long chatId){
+		String savedExplanations = UserStateManager.getUserState(chatId).explanations;
+
+		SendMessage sendMessage = new SendMessage();
+		sendMessage.setChatId(String.valueOf(chatId));
+		sendMessage.setText(savedExplanations != null ? savedExplanations : "Пояснения отсутствуют");
+
+		ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
+		keyboardMarkup.setResizeKeyboard(true);
+
+		List<KeyboardRow> keyboard = new ArrayList<>();
+		KeyboardRow row = new KeyboardRow();
+		row.add(new KeyboardButton("Выбрать задание"));
+		row.add(new KeyboardButton("Проверить знания"));
+		row.add(new KeyboardButton("Статистика"));
+		keyboard.add(row);
+		
+		keyboardMarkup.setKeyboard(keyboard);
+		sendMessage.setReplyMarkup(keyboardMarkup);
+
+		return sendMessage;
 	}
 
 	private static char findUpperCase(String text){
@@ -219,13 +259,27 @@ public class MainFunctional{
 
 
 }
-class Number9{
-	public static String createTask(Random random, List<TaskMap> task){
+
+class TaskResult {
+	String message;
+	String answer;
+	String explanations;
+	
+	TaskResult(String message, String answer, String explanations) {
+		this.message = message;
+		this.answer = answer;
+		this.explanations = explanations;
+	}
+}
+
+class Number9to12 {
+	public static TaskResult createTask(MainFunctional functional, Random random, List<TaskMap> task, int wordCount) {
 		String message = "Укажите варианты ответов, в которых во всех словах одного ряда пропущена одна и та же буква. Запишите номера ответов. Если подходящих вариантов нет, напишите 0.\n";
 		String explanations = "";
-		for(int i = 1; i <= 5; i++){
+		
+		for(int i = 1; i <= 5; i++) {
 			message += String.valueOf(i) + ") ";
-			for(int j = 1; j <= 3; j++){
+			for(int j = 1; j <= wordCount; j++) {
 				int randomIndex = random.nextInt(task.size());
 				String key = task.get(randomIndex).key;
 				String value = task.get(randomIndex).value;
@@ -235,9 +289,9 @@ class Number9{
 			}	
 			message += "\n";
 			explanations += "\n";
-
 		}
-		System.out.println(MainFunctional.findAnswer(explanations));
-		return message;
+				
+		String answer = functional.findAnswer(explanations);
+		return new TaskResult(message, answer, explanations);
 	}
 }

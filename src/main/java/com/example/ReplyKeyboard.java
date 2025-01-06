@@ -16,70 +16,75 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
+
+
 import java.util.List;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+
 
 public class ReplyKeyboard{
 	private MainKeyboard main = new MainKeyboard();
 	private CheckKeyboard check = new CheckKeyboard();
-	private SendMessage messageMenu = new SendMessage();
 
-	private boolean isChoosing = false;
-	private boolean isChecking = false;
-	private Settings settings = new Settings();
 	private Statistic statistic = new Statistic();
+	private SendMessage messageMenu = new SendMessage();
 	private MainFunctional functional = new MainFunctional();
+	
+	public SendMessage createMenu(Message message, long chatId, long userId){
+		String messageText = "";
+		String userName = "";
 
-	public void createMenu(TelegramLongPollingBot bot, Message message){
-		String messageText = message.getText();
-
-		long chatId = message.getChatId();
-		long userId = message.getFrom().getId();
-		String userName = message.getFrom().getFirstName();
-		if(message.getFrom().getLastName() != null) userName += message.getFrom().getLastName();
-
-		this.messageMenu.setChatId(String.valueOf(chatId));
-		this.messageMenu.setReplyMarkup(null);
-
-		if(messageText.equals("Выбрать задание") && !isChoosing && !isChecking){
-			this.messageMenu = check.createMenu(chatId, userId);
-			isChoosing = true;
+		if(message != null){
+			messageText = message.getText();
+			userName = message.getFrom().getFirstName();
 		}
-		else if(messageText.equals("Проверить знания") && !isChoosing){
 
-			String textForMenu = functional.makeTask(userId);
-			if(textForMenu != "Такого задания ещё нет в RusBooster") {
-				isChecking = true;
-				ReplyKeyboardRemove keyboardRemove = new ReplyKeyboardRemove(true);
-				this.messageMenu.setReplyMarkup(keyboardRemove);
+		UserState userState = UserStateManager.getUserState(userId);
+		if(message != null && message.getFrom().getLastName() != null) {userName += message.getFrom().getLastName();}
+
+		messageMenu.setChatId(String.valueOf(chatId));
+		messageMenu.setReplyMarkup(null);
+
+		if(messageText.equals("Выбрать задание") && !userState.isChoosing && !userState.isChecking){
+			messageMenu = check.createMenu(chatId, userId);
+			userState.isChoosing = true;
+		}
+		else if(messageText.equals("Проверить знания") && !userState.isChoosing){
+			messageMenu = functional.makeTask(userId);
+			if(messageMenu.getText() != "Такого задания ещё нет в RusBooster") {
+				userState.isChecking = true;
 			}
-			this.messageMenu.setText(textForMenu);
+			else{
+				messageMenu = main.createMenu(chatId);
+				messageMenu.setText("Такого задания ещё нет в RusBooster");
+			}
 		}
-		else if(messageText.equals("Статистика") && !isChecking && !isChoosing){
-			this.messageMenu.setText(statistic.getStatistic(userName, userId));
+		else if(messageText.equals("Статистика") && !userState.isChecking && !userState.isChoosing){
+			messageMenu.setText(statistic.getStatistic(userName, userId));
 		}
+
 		else{
-			this.messageMenu = main.createMenu(chatId);
-			try{
-				if(isChoosing){
-					isChoosing = false;
-					settings.chooseExercise(userId, messageText);
+			messageMenu = main.createMenu(chatId);
+			if(userState.isChoosing){
+				userState.isChoosing = false;
+				messageMenu.setText(statistic.chooseExercise(userId, messageText));
+				if(messageMenu.getText().equals("Перенапровляемся...")){
+					messageMenu = main.createMenu(chatId);
 				}
 			}
-			catch(NumberFormatException e){
-				e.printStackTrace();
-			}
-			if(isChecking){
-				isChecking = false;
-				this.messageMenu = functional.explanationTask(chatId, userId, messageText);
+			
+			if(userState.isChecking){
+				userState.isChecking = false;
+				messageMenu = functional.explanationTask(chatId, userId, messageText);
 			}
 		}
-
-		try{bot.execute(this.messageMenu); }
-		catch(TelegramApiException e){e.printStackTrace(); }
-}
-
+		return messageMenu;
+	}
 }
 
 class MainKeyboard{
@@ -114,31 +119,36 @@ class CheckKeyboard{
 		message.setChatId(String.valueOf(chatId));
 		message.setText("Напишите номер упражнения от 1 до 26: ");
 
-		ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
-		keyboardMarkup.setResizeKeyboard(true);
-		List<KeyboardRow> keyboard = new ArrayList<>();
-		KeyboardRow row2 = new KeyboardRow();
+		InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
+		InlineKeyboardButton baddestTask = new InlineKeyboardButton();
+		InlineKeyboardButton cancelChoose = new InlineKeyboardButton();
+
+		cancelChoose.setText("В главное меню");
+		cancelChoose.setCallbackData("cancelChoose");
+		baddestTask.setCallbackData("baddestTask");
 
 		try(Connection conn = DriverManager.getConnection(url)){
-			sql = "SELECT current_task FROM statistics WHERE user_id = ?";
+			sql = "SELECT baddest_task FROM statistics WHERE user_id = ?";
 			PreparedStatement pstmt = conn.prepareStatement(sql);
 			pstmt.setLong(1, userId);
 			ResultSet result = pstmt.executeQuery();
 			if(result.next()){
-				KeyboardRow row1 = new KeyboardRow();
-				row1.add(new KeyboardButton("Текущее задание: " + result.getString("current_task") ));
-				keyboard.add(row1);
+				if(result.getInt("baddest_task") != 0){
+					baddestTask.setText("Наихудшая успеваимость: №" + result.getInt("baddest_task"));
+					keyboardMarkup.setKeyboard(Arrays.asList(
+						Collections.singletonList(baddestTask),
+						Collections.singletonList(cancelChoose)
+					));
+				}
+				else{
+					keyboardMarkup.setKeyboard(Collections.singletonList(Collections.singletonList(cancelChoose)));
+				}
 			}
 		}
 		catch(SQLException e){
 			e.printStackTrace();
 		}
-		row2.add(new KeyboardButton("Назад"));
-		keyboard.add(row2);
-
-		keyboardMarkup.setKeyboard(keyboard);
 		message.setReplyMarkup(keyboardMarkup);
-
 		return message;
 	}
 }
