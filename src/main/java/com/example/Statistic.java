@@ -44,15 +44,44 @@ public class Statistic{
 					"	\nНаилучшая успеваимость: №" + result.getInt("better_task") + ", " + result.getInt("better_score") +
 					"\nТы занимаешься уже " + result.getInt("streak") + " дней подряд!👏";
 			}
-			else{
-				message = "Таблица " + "\"" + "statistics" + "\"" + " пуста для вашего userId.\nВыберите задания чтоб заполнить её!";
-			}
 		}
 		catch(SQLException e){
 			e.printStackTrace();
-			message = "Таблица " + "\"" + "statistics" + "\"" + " пуста для вашего userId.\nВыберите задания чтоб заполнить её!";
+			message = "Таблица " + "\"" + "statistics" + "\"" + " пуста.\nВыберите задания чтоб заполнить её!";
 
 		}
 		return message;
+	}
+	public String chooseExercise(long userId, String message){
+		try{
+			int numberOfExercise = Integer.parseInt(message);
+			if(numberOfExercise <= 26 && numberOfExercise >= 1){
+				try(Connection conn = DriverManager.getConnection(url)){
+					sql = "INSERT INTO statistics (user_id, current_task) VALUES (?, ?) ON CONFLICT(user_id) DO UPDATE SET current_task = excluded.current_task";
+					PreparedStatement pstmt = conn.prepareStatement(sql);
+					pstmt.setLong(1, userId);
+					pstmt.setInt(2, numberOfExercise);
+					pstmt.executeUpdate();			
+				}
+				return "Текущее задание: №" + numberOfExercise;
+			}
+			else{
+				UserStateManager.getUserState(userId).isChoosing = true;
+				return "Выберите задание от 1 до 26: ";
+			}
+		}
+		catch(NumberFormatException | SQLException e){
+			e.printStackTrace();
+			if(!message.isEmpty()) {
+				if(e instanceof NumberFormatException){
+					UserStateManager.getUserState(userId).isChoosing = true;
+					return "Введите номер задания числом: ";
+				}
+				else{
+					return "Произошла ошибка при работе с базой данных";
+				}
+			}
+			return "Перенапровляемся...";
+		}
 	}
 }

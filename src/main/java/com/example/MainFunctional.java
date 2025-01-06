@@ -113,7 +113,6 @@ public class MainFunctional{
 
 		InlineKeyboardMarkup keyboard = new InlineKeyboardMarkup();
 		keyboard.setKeyboard(Collections.singletonList(Collections.singletonList(showAllExplanations)));
-		sendMessage.setReplyMarkup(keyboard);
 
 		try{
 			int number = Integer.parseInt(message);
@@ -122,8 +121,13 @@ public class MainFunctional{
 				userAnswer += number % 10;
 				number /= 10;}
 			checkAnswer(userAnswer, userId);
+			sendMessage.setReplyMarkup(keyboard);
 		}
-		catch(NumberFormatException e){e.printStackTrace();}
+		catch(NumberFormatException e){
+			e.printStackTrace();
+			sendMessage.setText("Укажите варианты ответов числом");
+			UserStateManager.getUserState(userId).isChecking = true;
+		}
 		return sendMessage;
 	}
 

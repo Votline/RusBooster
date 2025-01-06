@@ -31,7 +31,6 @@ public class ReplyKeyboard{
 	private MainKeyboard main = new MainKeyboard();
 	private CheckKeyboard check = new CheckKeyboard();
 
-	private Settings settings = new Settings();
 	private Statistic statistic = new Statistic();
 	private SendMessage messageMenu = new SendMessage();
 	private MainFunctional functional = new MainFunctional();
@@ -71,24 +70,21 @@ public class ReplyKeyboard{
 
 		else{
 			messageMenu = main.createMenu(chatId);
-			try{
-				if(userState.isChoosing){
-					userState.isChoosing = false;
-					messageMenu.setText(settings.chooseExercise(userId, messageText));
-					//messageMenu.setReplyMarkup(null);
+			if(userState.isChoosing){
+				userState.isChoosing = false;
+				messageMenu.setText(statistic.chooseExercise(userId, messageText));
+				if(messageMenu.getText().equals("Перенапровляемся...")){
+					messageMenu = main.createMenu(chatId);
 				}
 			}
-			catch(NumberFormatException e){
-				e.printStackTrace();
-			}
+			
 			if(userState.isChecking){
 				userState.isChecking = false;
 				messageMenu = functional.explanationTask(chatId, userId, messageText);
 			}
 		}
 		return messageMenu;
-}
-
+	}
 }
 
 class MainKeyboard{

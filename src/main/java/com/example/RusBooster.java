@@ -33,7 +33,6 @@ public class RusBooster extends TelegramLongPollingBot{
 
 	@Override
 	public void onUpdateReceived(Update update){
-
 		if(update.hasMessage() && update.getMessage().hasText()){
 			messageText = update.getMessage().getText();
 			userId = update.getMessage().getFrom().getId();
