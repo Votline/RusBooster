@@ -140,9 +140,9 @@ class CheckKeyboard{
 						Collections.singletonList(cancelChoose)
 					));
 				}
-				else{
-					keyboardMarkup.setKeyboard(Collections.singletonList(Collections.singletonList(cancelChoose)));
-				}
+			}
+			else{
+				keyboardMarkup.setKeyboard(Collections.singletonList(Collections.singletonList(cancelChoose)));
 			}
 		}
 		catch(SQLException e){

@@ -179,7 +179,7 @@ public class MainFunctional{
 
 	public String findAnswer(String values){
 		if(values == null){
-			answer = "Ошика, нет значений для поиска";
+			answer = "Ошибка, нет значений для поиска";
 			return answer;
 		}
 		answer = "";
@@ -274,7 +274,7 @@ class TaskResult {
 
 class Number9to12 {
 	public static TaskResult createTask(MainFunctional functional, Random random, List<TaskMap> task, int wordCount) {
-		String message = "Укажите варианты ответов, в которых во всех словах одного ряда пропущена одна и та же буква. Запишите номера ответов. Если подходящих вариантов нет, напишите 0.\n";
+		String message = "Укажите варианты ответов, в которых во всех словах одного ряда пропущена одна и та же буква. Запишите номера ответов.";
 		String explanations = "";
 		
 		for(int i = 1; i <= 5; i++) {
@@ -292,6 +292,9 @@ class Number9to12 {
 		}
 				
 		String answer = functional.findAnswer(explanations);
+		if(answer.equals("Совпадений нет. Верный ответ: 0")){
+			return createTask(functional, random, task, wordCount);
+		}
 		return new TaskResult(message, answer, explanations);
 	}
 }
