@@ -39,6 +39,8 @@ public class MainFunctional{
 	private Random random = new Random();
 	private List<TaskMap> wordsForTask = new ArrayList<>();
 
+	private StreakSystem StreakSystem = new StreakSystem();
+
 	public SendMessage makeTask(long userId){
 		try(Connection connSet = DriverManager.getConnection(urlStat)){
 			sql = "SELECT current_task FROM statistics WHERE user_id = ?";
@@ -128,6 +130,7 @@ public class MainFunctional{
 			sendMessage.setText("Укажите варианты ответов числом");
 			UserStateManager.getUserState(userId).isChecking = true;
 		}
+		StreakSystem.checkStreak(userId);
 		return sendMessage;
 	}
 
@@ -274,7 +277,7 @@ class TaskResult {
 
 class Number9to12 {
 	public static TaskResult createTask(MainFunctional functional, Random random, List<TaskMap> task, int wordCount) {
-		String message = "Укажите варианты ответов, в которых во всех словах одного ряда пропущена одна и та же буква. Запишите номера ответов.";
+		String message = "Укажите варианты ответов, в которых во всех словах одного ряда пропущена одна и та же буква. Запишите номера ответов.\n";
 		String explanations = "";
 		
 		for(int i = 1; i <= 5; i++) {

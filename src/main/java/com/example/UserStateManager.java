@@ -11,6 +11,7 @@ public class UserStateManager{
 class UserState{
 	boolean isChoosing = false;
 	boolean isChecking = false;
+	boolean isActive = false;
 	int currentTask = 0;
 	String lastQuestion = null;
 	String explanations = null;

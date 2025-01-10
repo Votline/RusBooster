@@ -21,7 +21,8 @@ public class Statistic{
 				"baddest_score INTEGER DEFAULT 0," +
 				"better_task INTEGER DEFAULT '0'," +
 				"better_score INTEGER DEFAULT 0," +
-				"streak INTEGER" +
+				"last_Active_Date INTEGER DEFAULT '0'," +
+				"streak INTEGER DEFAULT '0'" +
 			");";
 			Statement stmt = conn.createStatement();
 			stmt.execute(sql);
