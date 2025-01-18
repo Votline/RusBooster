@@ -39,7 +39,7 @@ public class MainFunctional{
 	private Random random = new Random();
 	private List<TaskMap> wordsForTask = new ArrayList<>();
 
-	private StreakSystem StreakSystem = new StreakSystem();
+	private Statistic Statistic = new Statistic();
 
 	public SendMessage makeTask(long userId){
 		try(Connection connSet = DriverManager.getConnection(urlStat)){
@@ -130,7 +130,7 @@ public class MainFunctional{
 			sendMessage.setText("Укажите варианты ответов числом");
 			UserStateManager.getUserState(userId).isChecking = true;
 		}
-		StreakSystem.checkStreak(userId);
+		Statistic.checkStreak(userId);
 		return sendMessage;
 	}
 
