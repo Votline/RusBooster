@@ -1,3 +1,5 @@
+package com.example;
+
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
@@ -105,6 +107,10 @@ public class MainFunctional{
 	}
 
 	public SendMessage explanationTask(long chatId, long userId, String message){
+		UserStateManager.getUserState(userId).isActive = true;
+		Statistic.checkStreak(userId);
+		
+
 		SendMessage sendMessage = new SendMessage();
 		sendMessage.setChatId(String.valueOf(chatId));
 		sendMessage.setText("Ответ на задание №" + task_Id + ": " + answer);

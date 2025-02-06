@@ -1,3 +1,5 @@
+package com.example;
+
 import java.sql.PreparedStatement;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -35,6 +37,7 @@ public class Statistic{
 	}
 	public String getStatistic(String userName, long userId){
 		createTable();
+		checkStreak(userId);
 		try(Connection conn = DriverManager.getConnection(url)){
 			sql = "SELECT * FROM statistics WHERE user_id = ?";
 			PreparedStatement pstmt = conn.prepareStatement(sql);
@@ -91,35 +94,47 @@ public class Statistic{
 		}
 	}
 	public void checkStreak(long userId){
-        	UserState userState = UserStateManager.getUserState(userId);
-        	int lastActiveDate = 0;
-        	int currentDate = (int) LocalDate.now().toEpochDay();
-        	int streak = 0;
+		UserState userState = UserStateManager.getUserState(userId);
 
-        	try(Connection conn = DriverManager.getConnection(url)){
-        		sql = "SELECT last_Active_Date, streak FROM statistics WHERE user_id = ?";
-         		PreparedStatement pstmt = conn.prepareStatement(sql);
-            		pstmt.setLong(1, userId);
-            		ResultSet result = pstmt.executeQuery();
-            	
+		int currentDate = (int) LocalDate.now().toEpochDay();
+		int lastActiveDate = 0;
+		int difference = 0;
+		int streak = 0;
+
+    try(Connection conn = DriverManager.getConnection(url)){
+  		sql = "SELECT last_Active_Date, streak FROM statistics WHERE user_id = ?";
+   		PreparedStatement pstmt = conn.prepareStatement(sql);
+   		pstmt.setLong(1, userId);
+			ResultSet result = pstmt.executeQuery();
+			
 			while(result.next()){
-                		lastActiveDate = result.getInt("last_Active_Date");
-                		streak = result.getInt("streak");
-            		}
-			if(currentDate != lastActiveDate){
-                		lastActiveDate = currentDate;
-                		userState.isActive = true;
-                		streak += 1;
-            		}
-            		sql = "UPDATE statistics SET last_Active_Date = ?, streak = ? WHERE user_id = ?";
-            		pstmt = conn.prepareStatement(sql);
-            		pstmt.setInt(1, lastActiveDate);
-            		pstmt.setInt(2, streak);
-            		pstmt.setLong(3, userId);
-            		pstmt.executeUpdate();
-        	}
-        	catch(SQLException e){
-        	    e.printStackTrace();
-        	}
-    	}
+    		lastActiveDate = result.getInt("last_Active_Date");
+				streak = result.getInt("streak");
+      }
+
+			difference = currentDate - lastActiveDate;
+			if(difference == 1 && userState.isActive){
+				streak += 1;
+			}
+			else if(difference > 1){
+				streak = 0;
+			}
+			else{
+				return;
+			}
+			lastActiveDate = currentDate;
+			
+
+			sql = "UPDATE statistics SET last_Active_Date = ?, streak = ? WHERE user_id = ?";
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setInt(1, lastActiveDate);
+			pstmt.setInt(2, streak);
+			pstmt.setLong(3, userId);      
+			pstmt.executeUpdate();
+    }
+
+		catch(SQLException e){
+			e.printStackTrace();  
+		}
+  }
 }

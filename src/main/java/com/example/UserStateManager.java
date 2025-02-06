@@ -1,3 +1,5 @@
+package com.example;
+
 import java.util.concurrent.ConcurrentHashMap;
 
 public class UserStateManager{
