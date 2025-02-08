@@ -108,12 +108,18 @@ public class MainFunctional{
 
 	public SendMessage explanationTask(long chatId, long userId, String message){
 		UserStateManager.getUserState(userId).isActive = true;
-		Statistic.checkStreak(userId);
-		
+		String additionalMessage = Statistic.checkStreak(userId);
+		String sendMessageText;
 
 		SendMessage sendMessage = new SendMessage();
 		sendMessage.setChatId(String.valueOf(chatId));
-		sendMessage.setText("Ответ на задание №" + task_Id + ": " + answer);
+		if(additionalMessage != null){	
+			sendMessageText = "Ответ на задание №" + task_Id + ": " + answer + "\n\n" + additionalMessage;
+		}
+		else {
+			sendMessageText = "Ответ на задание №" + task_Id + ": " + answer;
+		}
+		sendMessage.setText(sendMessageText);
 
 		InlineKeyboardButton showAllExplanations = new InlineKeyboardButton();
 		showAllExplanations.setText("Показать пояснения всех слов");
