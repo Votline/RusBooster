@@ -1,3 +1,5 @@
+package com.example;
+
 import java.sql.PreparedStatement;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -54,7 +56,8 @@ public class ReplyKeyboard{
 			messageMenu = check.createMenu(chatId, userId);
 			userState.isChoosing = true;
 		}
-		else if(messageText.equals("Проверить знания") && !userState.isChoosing){
+		else if(messageText.equals("Проверить знания")){
+			userState.isChoosing = false;
 			messageMenu = functional.makeTask(userId);
 			if(messageMenu.getText() != "Такого задания ещё нет в RusBooster") {
 				userState.isChecking = true;
@@ -64,7 +67,8 @@ public class ReplyKeyboard{
 				messageMenu.setText("Такого задания ещё нет в RusBooster");
 			}
 		}
-		else if(messageText.equals("Статистика") && !userState.isChecking && !userState.isChoosing){
+		else if(messageText.equals("Статистика") && !userState.isChecking){
+			userState.isChoosing = false;
 			messageMenu.setText(statistic.getStatistic(userName, userId));
 		}
 
@@ -140,9 +144,9 @@ class CheckKeyboard{
 						Collections.singletonList(cancelChoose)
 					));
 				}
-				else{
-					keyboardMarkup.setKeyboard(Collections.singletonList(Collections.singletonList(cancelChoose)));
-				}
+			}
+			else{
+				keyboardMarkup.setKeyboard(Collections.singletonList(Collections.singletonList(cancelChoose)));
 			}
 		}
 		catch(SQLException e){

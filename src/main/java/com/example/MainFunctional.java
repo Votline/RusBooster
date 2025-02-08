@@ -1,3 +1,5 @@
+package com.example;
+
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
@@ -38,6 +40,8 @@ public class MainFunctional{
 	private String returnMessage;
 	private Random random = new Random();
 	private List<TaskMap> wordsForTask = new ArrayList<>();
+
+	private Statistic Statistic = new Statistic();
 
 	public SendMessage makeTask(long userId){
 		try(Connection connSet = DriverManager.getConnection(urlStat)){
@@ -103,9 +107,19 @@ public class MainFunctional{
 	}
 
 	public SendMessage explanationTask(long chatId, long userId, String message){
+		UserStateManager.getUserState(userId).isActive = true;
+		String additionalMessage = Statistic.checkStreak(userId);
+		String sendMessageText;
+
 		SendMessage sendMessage = new SendMessage();
 		sendMessage.setChatId(String.valueOf(chatId));
-		sendMessage.setText("Ответ на задание №" + task_Id + ": " + answer);
+		if(additionalMessage != null){	
+			sendMessageText = "Ответ на задание №" + task_Id + ": " + answer + "\n\n" + additionalMessage;
+		}
+		else {
+			sendMessageText = "Ответ на задание №" + task_Id + ": " + answer;
+		}
+		sendMessage.setText(sendMessageText);
 
 		InlineKeyboardButton showAllExplanations = new InlineKeyboardButton();
 		showAllExplanations.setText("Показать пояснения всех слов");
@@ -128,6 +142,7 @@ public class MainFunctional{
 			sendMessage.setText("Укажите варианты ответов числом");
 			UserStateManager.getUserState(userId).isChecking = true;
 		}
+		Statistic.checkStreak(userId);
 		return sendMessage;
 	}
 
@@ -179,7 +194,7 @@ public class MainFunctional{
 
 	public String findAnswer(String values){
 		if(values == null){
-			answer = "Ошика, нет значений для поиска";
+			answer = "Ошибка, нет значений для поиска";
 			return answer;
 		}
 		answer = "";
@@ -274,7 +289,7 @@ class TaskResult {
 
 class Number9to12 {
 	public static TaskResult createTask(MainFunctional functional, Random random, List<TaskMap> task, int wordCount) {
-		String message = "Укажите варианты ответов, в которых во всех словах одного ряда пропущена одна и та же буква. Запишите номера ответов. Если подходящих вариантов нет, напишите 0.\n";
+		String message = "Укажите варианты ответов, в которых во всех словах одного ряда пропущена одна и та же буква. Запишите номера ответов.\n";
 		String explanations = "";
 		
 		for(int i = 1; i <= 5; i++) {
@@ -292,6 +307,9 @@ class Number9to12 {
 		}
 				
 		String answer = functional.findAnswer(explanations);
+		if(answer.equals("Совпадений нет. Верный ответ: 0")){
+			return createTask(functional, random, task, wordCount);
+		}
 		return new TaskResult(message, answer, explanations);
 	}
 }
