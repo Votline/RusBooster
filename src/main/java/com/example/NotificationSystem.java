@@ -27,7 +27,7 @@ public class NotificationSystem{
     scheduler.schedule(() -> {
       sendNotification();
       scheduleNotification();
-    }, findPeriod(), TimeUnit.SECONDS);
+    }, findPeriod(), TimeUnit.HOURS);
   }
 
   public void sendNotification(){
