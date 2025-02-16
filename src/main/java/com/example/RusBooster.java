@@ -10,11 +10,10 @@ import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-
 public class RusBooster extends TelegramLongPollingBot{
 	private static final String BOT_TOKEN = loadToken();
 	private static final String BOT_NAME = "RusBooster";
-
+	
 	private long chatId;
 	private long userId;
 	private String messageText;
@@ -22,7 +21,8 @@ public class RusBooster extends TelegramLongPollingBot{
 	ReplyKeyboard botMenu = new ReplyKeyboard();
 	AdminCommands adminCommands = new AdminCommands();
 	MainFunctional functional = new MainFunctional();
-	
+	NotificationSystem notify = new NotificationSystem(this);
+
 	@Override
 	public String getBotUsername(){
 		return BOT_NAME;
@@ -71,6 +71,8 @@ public class RusBooster extends TelegramLongPollingBot{
 			catch(TelegramApiException e){e.printStackTrace();}
 		}
 	}
+	
+
 	private static String loadToken() {
         try {
             return Files.readString(Path.of("token.txt")).trim();

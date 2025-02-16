@@ -76,7 +76,7 @@ public class ReplyKeyboard{
 			messageMenu = main.createMenu(chatId);
 			if(userState.isChoosing){
 				userState.isChoosing = false;
-				messageMenu.setText(statistic.chooseExercise(userId, messageText));
+				messageMenu.setText(statistic.chooseExercise(userId, chatId, messageText));
 				if(messageMenu.getText().equals("Перенапровляемся...")){
 					messageMenu = main.createMenu(chatId);
 				}
@@ -144,10 +144,15 @@ class CheckKeyboard{
 						Collections.singletonList(cancelChoose)
 					));
 				}
+				else{
+					keyboardMarkup.setKeyboard(Collections.singletonList(Collections.singletonList(cancelChoose)));
+				}
 			}
 			else{
 				keyboardMarkup.setKeyboard(Collections.singletonList(Collections.singletonList(cancelChoose)));
 			}
+		
+			pstmt.close(); result.close();
 		}
 		catch(SQLException e){
 			e.printStackTrace();

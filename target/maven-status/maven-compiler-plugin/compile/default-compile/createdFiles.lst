@@ -9,6 +9,7 @@ com/example/MainKeyboard.class
 com/example/Statistic.class
 com/example/ReplyKeyboard.class
 com/example/CheckKeyboard.class
+com/example/NotificationSystem.class
 com/example/AdminCommands.class
 com/example/UserStateManager.class
 com/example/Main.class

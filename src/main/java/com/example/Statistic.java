@@ -7,8 +7,10 @@ import java.sql.Connection;
 import java.sql.Statement;
 import java.sql.ResultSet;
 
+import java.util.ArrayList;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.List;
 
 public class Statistic{
 	private String url = "jdbc:sqlite:" + System.getProperty("user.dir") + "/statistic.db";
@@ -20,6 +22,7 @@ public class Statistic{
 		try(Connection conn = DriverManager.getConnection(url)){
 			sql = "CREATE TABLE IF NOT EXISTS statistics ("+
 				"user_id LONG NOT NULL UNIQUE," +
+				"chat_id LONG NOT NULL UNIQUE," +
 				"current_task INTEGER DEFAULT 0," +
 				"current_score INTEGER DEFAULT 0," +
 				"baddest_task INTEGER DEFAULT '0'," +
@@ -27,8 +30,11 @@ public class Statistic{
 				"better_task INTEGER DEFAULT '0'," +
 				"better_score INTEGER DEFAULT 0," +
 				"last_Active_Date INTEGER  DEFAULT '0'," +
-				"streak INTEGER DEFAULT '0'" +
-			");";
+				"streak INTEGER DEFAULT '0'," +
+				"timeZone INTEGER DEFAULT '0'," +
+				"streakFreeze INTEGER DEFAULT '0'," +
+				"PRIMARY KEY (user_id, chat_id)" +
+				");";
 			Statement stmt = conn.createStatement();
 			stmt.execute(sql);
 		}
@@ -53,8 +59,10 @@ public class Statistic{
 					"\nТы занимаешься уже " + result.getInt("streak") + " " + getDayForm(result.getInt("streak")) + " подряд!👏";
 			}
 			else{
-				message = "Ваша статистика  пуста.\nВыберите задания чтоб заполнить её!";
+				message = "Ваша статистика  пуста.\nВыберите задание чтоб заполнить её!";
 			}
+			
+			result.close(); pstmt.close();
 		}
 		catch(SQLException e){
 			e.printStackTrace();
@@ -63,16 +71,19 @@ public class Statistic{
 		}
 		return message;
 	}
-	public String chooseExercise(long userId, String message){
+	public String chooseExercise(long userId, long chatId, String message){
 		try{
 			int numberOfExercise = Integer.parseInt(message);
 			if(numberOfExercise <= 26 && numberOfExercise >= 1){
 				try(Connection conn = DriverManager.getConnection(url)){
-					sql = "INSERT INTO statistics (user_id, current_task) VALUES (?, ?) ON CONFLICT(user_id) DO UPDATE SET current_task = excluded.current_task";
+					sql = "INSERT INTO statistics (user_id, chat_id, current_task) VALUES (?, ?, ?) ON CONFLICT(user_id, chat_id) DO UPDATE SET current_task = excluded.current_task";
 					PreparedStatement pstmt = conn.prepareStatement(sql);
 					pstmt.setLong(1, userId);
-					pstmt.setInt(2, numberOfExercise);
+					pstmt.setLong(2, chatId);
+					pstmt.setInt(3, numberOfExercise);
 					pstmt.executeUpdate();			
+			
+					pstmt.close();
 				}
 				return "Текущее задание: №" + numberOfExercise;
 			}
@@ -89,7 +100,8 @@ public class Statistic{
 					return "Введите номер задания числом: ";
 				}
 				else{
-					return "Произошла ошибка при работе с базой данных";
+					createTable(); chooseExercise(userId, chatId, message);
+					return "Произошла ошибка при работе с базой данных. Создаю новую таблицу...";
 				}
 			}
 			return "Перенапровляемся...";
@@ -100,7 +112,6 @@ public class Statistic{
 
 		String streakMessage = "";
 		int currentDate = (int) LocalDate.now(ZoneId.of("Europe/Moscow")).toEpochDay();
-		System.out.println(LocalDate.now(ZoneId.of("Europe/Moscow")));
 		int lastActiveDate = 0;
 		int difference = 0;
 		int streak = 0;
@@ -116,11 +127,9 @@ public class Statistic{
     		lastActiveDate = result.getInt("last_Active_Date");
 				streak = result.getInt("streak");
       }
+			result.close(); pstmt.close();
 
 			difference = currentDate - lastActiveDate;
-			System.out.println(difference);
-			System.out.println(userState.isActive);
-			
 			if(difference == 1 && userState.isActive || streak == 0 && userState.isActive){
 				streak += 1;
 				lastActiveDate = currentDate;
@@ -136,6 +145,8 @@ public class Statistic{
 			pstmt.setInt(2, streak);
 			pstmt.setLong(3, userId);      
 			pstmt.executeUpdate();
+			
+			result.close(); pstmt.close();
     }
 		catch(SQLException e){
 			e.printStackTrace();  
@@ -146,7 +157,10 @@ public class Statistic{
 	private String getDayForm(int number){
 		int lastDigit = number % 10;
 		int lastTwoDigits = number % 100;
-		if(lastDigit == 1 && lastTwoDigits != 11){
+		if(number == 0){
+			return "дней";
+		}
+		else if(lastDigit == 1 && lastTwoDigits != 11){
 			return "день";
 		}
 		else if(lastDigit >= 2 && lastDigit <= 4 || !(lastTwoDigits >= 12 && lastTwoDigits <= 14)){
@@ -155,5 +169,37 @@ public class Statistic{
 		else{
 			return "дней";
 		}
+	}
+	public List<Long> getAllChatIds(){
+		int currentDate = (int) LocalDate.now(ZoneId.of("Europe/Moscow")).toEpochDay();
+		List<Long> chatIds= new ArrayList<>(); 
+    
+		try(Connection conn = DriverManager.getConnection(url)){
+			sql = "SELECT user_id, chat_id, streak, last_Active_Date FROM statistics";
+			PreparedStatement pstmt = conn.prepareStatement(sql);
+			ResultSet result = pstmt.executeQuery();
+			while(result.next()){
+				long userId = result.getLong("user_id");
+				long chatId = result.getLong("chat_id");
+				int streak = result.getInt("streak");
+				int lastActiveDate = result.getInt("last_Active_Date");
+				if(currentDate - lastActiveDate == 1 && streak != 0){
+					chatIds.add(chatId);
+				}
+				else if(currentDate - lastActiveDate > 1 && lastActiveDate != 0 && streak != 0){
+					sql = "UPDATE statistics SET streak = ?, last_Active_Date = ? WHERE user_id = ?";
+					pstmt = conn.prepareStatement(sql);
+					pstmt.setInt(1, 0);
+					pstmt.setInt(2, 0);
+					pstmt.setLong(3, userId);
+					pstmt.executeUpdate();
+				}
+			}
+			result.close(); pstmt.close();
+		}
+		catch(SQLException e){
+			e.printStackTrace();
+		}
+		return chatIds;
 	}
 }
