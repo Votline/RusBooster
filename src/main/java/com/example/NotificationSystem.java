@@ -9,6 +9,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
+import java.time.ZonedDateTime;
+import java.time.LocalDate;
+import java.time.ZoneId;
+
 import java.util.List;
 import java.util.ArrayList;
 
@@ -24,30 +28,31 @@ public class NotificationSystem{
     scheduleNotification();
   }
   private void scheduleNotification(){
-    scheduler.schedule(() -> {
-      sendNotification();
-      scheduleNotification();
-    }, findPeriod(), TimeUnit.HOURS);
+    List<Long> chatIds = statistic.getAllChatIds();
+    for(long id : chatIds){
+      scheduler.schedule(() -> {
+       sendNotification(id);
+       scheduleNotification();
+      }, findPeriod(id), TimeUnit.HOURS);
+    }
   }
 
-  public void sendNotification(){
+  public void sendNotification(long id){
     try{
-      List<Long> chatIds = statistic.getAllChatIds();
       SendMessage notify = new SendMessage();
       notify.setText("Не забудь выполнить задание чтобы увеличить свой рекорд!");
-      for(long id : chatIds){
-        notify.setChatId(String.valueOf(id));
-        bot.execute(notify);
-      }
+      notify.setChatId(String.valueOf(id));
+      bot.execute(notify);
     }
     catch(TelegramApiException e){
       e.printStackTrace();
     }
   }
-  public long findPeriod(){
+  public long findPeriod(long chatId){
     long period = 3;
     Calendar calendar = Calendar.getInstance();
     calendar.setTimeZone(TimeZone.getTimeZone("Europe/Moscow"));
+    calendar.add(calendar.HOUR_OF_DAY, statistic.findUserOffset(chatId));
     int hour = calendar.get(Calendar.HOUR_OF_DAY);
 
     if(hour >= 0 && hour < 12){

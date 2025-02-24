@@ -52,12 +52,12 @@ public class ReplyKeyboard{
 		messageMenu.setChatId(String.valueOf(chatId));
 		messageMenu.setReplyMarkup(null);
 
-		if(messageText.equals("Выбрать задание") && !userState.isChoosing && !userState.isChecking){
+		if(messageText.equals("Выбрать задание") && !userState.isChoosing && !userState.isChecking && !userState.isSetting){
 			messageMenu = check.createMenu(chatId, userId);
 			userState.isChoosing = true;
 		}
 		else if(messageText.equals("Проверить знания")){
-			userState.isChoosing = false;
+			userState.isChoosing = false; userState.isSetting = false;
 			messageMenu = functional.makeTask(userId);
 			if(messageMenu.getText() != "Такого задания ещё нет в RusBooster") {
 				userState.isChecking = true;
@@ -67,13 +67,22 @@ public class ReplyKeyboard{
 				messageMenu.setText("Такого задания ещё нет в RusBooster");
 			}
 		}
-		else if(messageText.equals("Статистика") && !userState.isChecking){
-			userState.isChoosing = false;
+		else if(messageText.equals("Статистика") && !userState.isChecking && !userState.isSetting){
+			userState.isChoosing = false; userState.isSetting = false;
 			messageMenu.setText(statistic.getStatistic(userName, userId));
+			InlineKeyboardMarkup statKeyboard = new InlineKeyboardMarkup();
+			InlineKeyboardButton chooseTimeZone = new InlineKeyboardButton(); chooseTimeZone.setText("Указать часовой пояс");
+			InlineKeyboardButton goBack = new InlineKeyboardButton(); goBack.setText("Вернуться в главное меню");
+			chooseTimeZone.setCallbackData("chooseTimeZone"); goBack.setCallbackData("goBack");
+			statKeyboard.setKeyboard(Arrays.asList(
+						Collections.singletonList(chooseTimeZone),
+						Collections.singletonList(goBack)));
+			messageMenu.setReplyMarkup(statKeyboard);
 		}
 
 		else{
 			messageMenu = main.createMenu(chatId);
+			
 			if(userState.isChoosing){
 				userState.isChoosing = false;
 				messageMenu.setText(statistic.chooseExercise(userId, chatId, messageText));
@@ -86,8 +95,13 @@ public class ReplyKeyboard{
 				userState.isChecking = false;
 				messageMenu = functional.explanationTask(chatId, userId, messageText);
 			}
+			else if(userState.isSetting && messageText != ""){
+				userState.isSetting = false;
+				messageMenu = main.createMenu(chatId);
+				messageMenu.setText(statistic.setTimeZone(userId, messageText));	
+			}
 		}
-		return messageMenu;
+		return !userState.isSetting ? messageMenu : null;
 	}
 }
 

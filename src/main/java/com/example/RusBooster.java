@@ -18,6 +18,7 @@ public class RusBooster extends TelegramLongPollingBot{
 	private long userId;
 	private String messageText;
 
+	Statistic statistic = new Statistic();
 	ReplyKeyboard botMenu = new ReplyKeyboard();
 	AdminCommands adminCommands = new AdminCommands();
 	MainFunctional functional = new MainFunctional();
@@ -55,6 +56,11 @@ public class RusBooster extends TelegramLongPollingBot{
 			}
 			else if("cancelTask".equals(callbackData)){
 				userState.isChecking = false;
+				userState.isSetting = false;
+			}
+			else if("chooseTimeZone".equals(callbackData) && !userState.isChecking){
+				try{this.execute(statistic.printTimeZone(callbackChatId));}
+				catch(TelegramApiException e){e.printStackTrace();}
 			}
 			try{this.execute(botMenu.createMenu(update.getMessage(), callbackChatId, callbackUserId));}	
 			catch(TelegramApiException e){e.printStackTrace();}

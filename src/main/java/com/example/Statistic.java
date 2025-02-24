@@ -7,10 +7,15 @@ import java.sql.Connection;
 import java.sql.Statement;
 import java.sql.ResultSet;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
+
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
 public class Statistic{
 	private String url = "jdbc:sqlite:" + System.getProperty("user.dir") + "/statistic.db";
@@ -56,7 +61,8 @@ public class Statistic{
 					"	\nТекущее задание: " + result.getInt("current_task") +
 					"	\nНаихудшая успеваимость: №" + result.getInt("baddest_task") + ", " + result.getInt("baddest_score") +
 					"	\nНаилучшая успеваимость: №" + result.getInt("better_task") + ", " + result.getInt("better_score") +
-					"\nТы занимаешься уже " + result.getInt("streak") + " " + getDayForm(result.getInt("streak")) + " подряд!👏";
+					" \nТы занимаешься уже " + result.getInt("streak") + " " + getDayForm(result.getInt("streak")) + " подряд!👏" +
+					" \n" + (result.getInt("timeZone") > 0 ? "Текущий часовой пояс: +" + result.getInt("timeZone") + " от МСК" : "Текущий часовой пояс: МСК"); 
 			}
 			else{
 				message = "Ваша статистика  пуста.\nВыберите задание чтоб заполнить её!";
@@ -171,17 +177,18 @@ public class Statistic{
 		}
 	}
 	public List<Long> getAllChatIds(){
-		int currentDate = (int) LocalDate.now(ZoneId.of("Europe/Moscow")).toEpochDay();
-		List<Long> chatIds= new ArrayList<>(); 
-    
+		ZonedDateTime moscowDate = ZonedDateTime.now(ZoneId.of("Europe/Moscow"));
+		List<Long> chatIds = new ArrayList<>(); 
+
 		try(Connection conn = DriverManager.getConnection(url)){
-			sql = "SELECT user_id, chat_id, streak, last_Active_Date FROM statistics";
+			sql = "SELECT user_id, chat_id, streak, last_Active_Date, timeZone FROM statistics";
 			PreparedStatement pstmt = conn.prepareStatement(sql);
 			ResultSet result = pstmt.executeQuery();
 			while(result.next()){
+				int currentDate = (int) moscowDate.plusHours(result.getInt("timeZone")).toLocalDate().toEpochDay();
+				int streak = result.getInt("streak");
 				long userId = result.getLong("user_id");
 				long chatId = result.getLong("chat_id");
-				int streak = result.getInt("streak");
 				int lastActiveDate = result.getInt("last_Active_Date");
 				if(currentDate - lastActiveDate == 1 && streak != 0){
 					chatIds.add(chatId);
@@ -201,5 +208,52 @@ public class Statistic{
 			e.printStackTrace();
 		}
 		return chatIds;
+	}
+	public int findUserOffset(long chatId){
+		int timeZone = 0;
+		sql = "SELECT timeZone FROM statistics WHERE chat_id = ?";
+		try(Connection conn = DriverManager.getConnection(url)){
+			PreparedStatement pstmt = conn.prepareStatement(sql);
+			pstmt.setLong(1, chatId);
+			ResultSet result = pstmt.executeQuery();
+			timeZone = result.getInt("timeZone");
+		}
+		catch(SQLException e){
+			e.printStackTrace();
+		}
+		return timeZone;
+	}
+	public SendMessage printTimeZone(long chatId){
+		UserStateManager.getUserState(chatId).isSetting = true;
+		SendMessage sendMessage = new SendMessage();
+		sendMessage.setChatId(String.valueOf(chatId));
+		sendMessage.setText(
+				(findUserOffset(chatId) == 0) ?
+					"Текущий часовой пояс: МСК." :
+				(findUserOffset(chatId) > 0) ?
+					"Текущий часовой пояс: +" + findUserOffset(chatId) + " от МСК." :
+					"Текущий часовой пояс: " + findUserOffset(chatId) + " от МСК."
+		); sendMessage.setText(sendMessage.getText() + "\nНапишите свою разницу во времени от МСК:");	
+		InlineKeyboardMarkup setKeyboard = new InlineKeyboardMarkup();		
+		InlineKeyboardButton goBack = new InlineKeyboardButton(); goBack.setText("Вернуться в главное меню");
+		goBack.setCallbackData("cancelTask");
+		return sendMessage;
+	}
+	public String setTimeZone(long userId, String messageText){
+		try(Connection conn = DriverManager.getConnection(url)){
+			sql = "UPDATE statistics SET timeZone = ? WHERE user_id = ?";
+			PreparedStatement pstmt = conn.prepareStatement(sql);
+			pstmt.setInt(1, Integer.parseInt(messageText));
+			pstmt.setLong(2, userId);		
+			pstmt.executeUpdate();
+			messageText = ( (Integer.parseInt(messageText) > 0) ? 
+					"Успешно! Ваш часовой пояс изменён на +" + messageText + " от МСК" :
+					"Успешно! Ваш часовой пояс изменён на " + messageText + " от МСК");
+		}
+		catch(SQLException | NumberFormatException e){
+			e.printStackTrace();
+			messageText = "Произошла ошибка при работе с данными";
+		}
+		return messageText;
 	}
 }
