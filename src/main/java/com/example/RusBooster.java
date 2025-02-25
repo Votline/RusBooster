@@ -9,6 +9,9 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
+
 
 public class RusBooster extends TelegramLongPollingBot{
 	private static final String BOT_TOKEN = loadToken();
@@ -48,23 +51,39 @@ public class RusBooster extends TelegramLongPollingBot{
 			String callbackData = update.getCallbackQuery().getData();
 			long callbackChatId = update.getCallbackQuery().getMessage().getChatId();
 			long callbackUserId = update.getCallbackQuery().getFrom().getId();
-			
+			long callbackMessageId = update.getCallbackQuery().getMessage().getMessageId();
+
 			if("showExplanations".equals(callbackData)){
 				try{this.execute(functional.showExplanations(callbackChatId));}
 				catch(TelegramApiException e){e.printStackTrace();}
 				return;
 			}
-			else if("cancelTask".equals(callbackData)){
+			else if("cancelTask".equals(callbackData) || "toMain".equals(callbackData)){
+				userState.isChoosing = false;
 				userState.isChecking = false;
 				userState.isSetting = false;
+				DeleteMessage deleteMessage = new DeleteMessage();
+				deleteMessage.setChatId(String.valueOf(callbackChatId));
+				deleteMessage.setMessageId((int) callbackMessageId);
+				try{this.execute(deleteMessage);}
+				catch(TelegramApiException e){e.printStackTrace();}
 			}
 			else if("chooseTimeZone".equals(callbackData) && !userState.isChecking){
 				try{this.execute(statistic.printTimeZone(callbackChatId));}
 				catch(TelegramApiException e){e.printStackTrace();}
 			}
-			try{this.execute(botMenu.createMenu(update.getMessage(), callbackChatId, callbackUserId));}	
-			catch(TelegramApiException e){e.printStackTrace();}
-
+			else if("back".equals(callbackData)){				
+				try{this.execute(adminCommands.showBack(callbackChatId, callbackMessageId));}
+        catch(TelegramApiException e){e.printStackTrace();}
+			}
+      else if("next".equals(callbackData)){
+				try{this.execute(adminCommands.showNext(callbackChatId, callbackMessageId));}
+        catch(TelegramApiException e){e.printStackTrace();}
+			}
+			if(update.getMessage() != null){
+				try{this.execute(botMenu.createMenu(update.getMessage(), callbackChatId, callbackUserId));}	
+				catch(TelegramApiException e){e.printStackTrace();}
+			}
 			return;
 		}
 

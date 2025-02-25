@@ -73,7 +73,7 @@ public class ReplyKeyboard{
 			InlineKeyboardMarkup statKeyboard = new InlineKeyboardMarkup();
 			InlineKeyboardButton chooseTimeZone = new InlineKeyboardButton(); chooseTimeZone.setText("Указать часовой пояс");
 			InlineKeyboardButton goBack = new InlineKeyboardButton(); goBack.setText("Вернуться в главное меню");
-			chooseTimeZone.setCallbackData("chooseTimeZone"); goBack.setCallbackData("goBack");
+			chooseTimeZone.setCallbackData("chooseTimeZone"); goBack.setCallbackData("toMain");
 			statKeyboard.setKeyboard(Arrays.asList(
 						Collections.singletonList(chooseTimeZone),
 						Collections.singletonList(goBack)));
@@ -142,7 +142,7 @@ class CheckKeyboard{
 		InlineKeyboardButton cancelChoose = new InlineKeyboardButton();
 
 		cancelChoose.setText("В главное меню");
-		cancelChoose.setCallbackData("cancelChoose");
+		cancelChoose.setCallbackData("toMain");
 		baddestTask.setCallbackData("baddestTask");
 
 		try(Connection conn = DriverManager.getConnection(url)){

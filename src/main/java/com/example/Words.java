@@ -7,6 +7,9 @@ import java.sql.Connection;
 import java.sql.Statement;
 import java.sql.ResultSet;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Words{
 	private String message;
 
@@ -73,7 +76,8 @@ public class Words{
 		return message;
 	}
 
-	public String showAllBase(String task_id){
+	public List<String> showAllBase(String task_id){
+		List<String> allWords = new ArrayList<>(); int cnt = 0;
 		try(Connection conn = DriverManager.getConnection(url)){
 			sql = "SELECT word, explanation FROM words WHERE task_id = ?";
 			PreparedStatement pstmt = conn.prepareStatement(sql);
@@ -81,15 +85,21 @@ public class Words{
 			ResultSet result = pstmt.executeQuery();
 			message = "";
 			while(result.next()){
+				cnt++;
 				String word = result.getString("word");
 				String explanation = result.getString("explanation");
 				message += "Слово: " + "\"" + word + "\"" + ". Значение: " + "\"" +  explanation + "\"" +  ". Номер задания: " + "\"" +  task_id + "\"" + "\n \n";
+				if(cnt == 5){
+					allWords.add(message);
+					message = "";
+					cnt = 0;
+				}
 			}
 		}
 		catch(SQLException e){
 			e.printStackTrace();
 		}
-		return message;
+		return allWords;
 	}
 
 	private boolean checkBase(String name, String task_id){

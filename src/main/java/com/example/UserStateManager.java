@@ -2,6 +2,9 @@ package com.example;
 
 import java.util.concurrent.ConcurrentHashMap;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class UserStateManager{
 	private static final ConcurrentHashMap<Long, UserState> userStates = new ConcurrentHashMap<>();
 
@@ -16,6 +19,8 @@ class UserState{
 	boolean isSetting = false;
 	boolean isActive = false;
 	int currentTask = 0;
+	int currentPage = 0;
 	String lastQuestion = null;
 	String explanations = null;
+	List<String> allWords = new ArrayList<>();
 }
