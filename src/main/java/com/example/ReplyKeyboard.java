@@ -57,8 +57,11 @@ public class ReplyKeyboard{
 			userState.isChoosing = true;
 		}
 		else if(messageText.equals("Проверить знания")){
+			System.out.println("Проврить знания1");
 			userState.isChoosing = false; userState.isSetting = false;
 			messageMenu = functional.makeTask(userId);
+			System.out.println("Проврить знания2");
+
 			if(messageMenu.getText() != "Такого задания ещё нет в RusBooster") {
 				userState.isChecking = true;
 			}
@@ -93,7 +96,7 @@ public class ReplyKeyboard{
 			
 			if(userState.isChecking){
 				userState.isChecking = false;
-				messageMenu = functional.explanationTask(chatId, userId, messageText);
+				messageMenu = functional.responseForTask(chatId, userId, messageText);
 			}
 			else if(userState.isSetting && messageText != ""){
 				userState.isSetting = false;
