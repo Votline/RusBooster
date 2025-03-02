@@ -114,25 +114,31 @@ public class Statistic{
 		}
 	}
 	public String checkStreak(long userId){
+		ZonedDateTime moscowDate = ZonedDateTime.now(ZoneId.of("Europe/Moscow"));
 		UserState userState = UserStateManager.getUserState(userId);
 
 		String streakMessage = "";
-		int currentDate = (int) LocalDate.now(ZoneId.of("Europe/Moscow")).toEpochDay();
 		int lastActiveDate = 0;
+		int currentDate = 0;
 		int difference = 0;
 		int streak = 0;
 		
 
-    try(Connection conn = DriverManager.getConnection(url)){
-  		sql = "SELECT last_Active_Date, streak FROM statistics WHERE user_id = ?";
-   		PreparedStatement pstmt = conn.prepareStatement(sql);
-   		pstmt.setLong(1, userId);
+    		try(Connection conn = DriverManager.getConnection(url)){
+  			sql = "SELECT last_Active_Date, streak, timeZone FROM statistics WHERE user_id = ?";
+   			PreparedStatement pstmt = conn.prepareStatement(sql);
+   			pstmt.setLong(1, userId);
 			ResultSet result = pstmt.executeQuery();
 			
 			while(result.next()){
-    		lastActiveDate = result.getInt("last_Active_Date");
+				currentDate = (int) moscowDate.plusHours(result.getInt("timeZone")).toLocalDate().toEpochDay();
+   	 			lastActiveDate = result.getInt("last_Active_Date");
 				streak = result.getInt("streak");
-      }
+				if(moscowDate.toLocalDate().toEpochDay() - currentDate < -1){
+					result.close(); pstmt.close();
+					return "Обнаружена попытка накрута. Ваш рекорд не увеличился. Разница между датами по МСК и по вашему часовому поясу больше чем 1.";
+				}
+			}
 			result.close(); pstmt.close();
 
 			difference = currentDate - lastActiveDate;
@@ -153,12 +159,12 @@ public class Statistic{
 			pstmt.executeUpdate();
 			
 			result.close(); pstmt.close();
-    }
+    		}
 		catch(SQLException e){
 			e.printStackTrace();  
 		}
 		return streakMessage;
-  }
+  	}
 	
 	private String getDayForm(int number){
 		int lastDigit = number % 10;
@@ -247,7 +253,7 @@ public class Statistic{
 			pstmt.setLong(2, userId);		
 			pstmt.executeUpdate();
 			messageText = ( (Integer.parseInt(messageText) > 0) ? 
-					"Успешно! Ваш часовой пояс изменён на +" + messageText + " от МСК" :
+					"Успешно! Ваш часовой пояс изменён на " + messageText + " от МСК" :
 					"Успешно! Ваш часовой пояс изменён на " + messageText + " от МСК");
 		}
 		catch(SQLException | NumberFormatException e){
