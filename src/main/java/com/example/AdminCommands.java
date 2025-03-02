@@ -19,37 +19,58 @@ public class AdminCommands{
 		message.setReplyMarkup(null);
 		String[] parts = messageText.split(" ", 5);
 		if(messageText.contains("/add")){
-			String task_id = parts[2];
-			String wordName = parts[3];
-			String wordExplanation = parts[4];
-			message.setText(words.addWord(wordName, wordExplanation, task_id));
+			try{
+				int task_id = Integer.parseInt(parts[2]);
+				String wordName = parts[3];
+				String wordExplanation = parts[4];
+				message.setText(words.addWord(wordName, wordExplanation, task_id));
+			}
+			catch(NumberFormatException e){
+				e.printStackTrace();
+				message.setText("Ошибка! Номер задания не является числом");
+				return message;
+			}
 		}
 		else if(messageText.contains("/remove")){
-			String task_id = parts[2];
-			String wordName = parts[3];
-			message.setText(words.removeWord(wordName, task_id));
-
+			try{
+				int task_id = Integer.parseInt(parts[2]);
+				String wordName = parts[3];
+				message.setText(words.removeWord(wordName, task_id));
+			}
+			catch(NumberFormatException e){
+				e.printStackTrace();
+				message.setText("Ошибка! Номер задания не является числом");
+				return message;
+			}
 		}
 		else if(messageText.contains("/showall")){
-			UserState userState = UserStateManager.getUserState(chatId);
-			String task_id = parts[2];
-			userState.allWords = words.showAllBase(task_id);
-			userState.isSetting = true;
-			userState.currentPage = 0;
-			message.setText(userState.allWords.get(userState.currentPage));
+			try{
+				int task_id =Integer.parseInt(parts[2]);
+				UserState userState = UserStateManager.getUserState(chatId);
+				userState.allWords = words.showAllBase(task_id, parts[3]);
+				userState.isSetting = true;
+				userState.currentPage = 0;
+				message.setText(userState.allWords.get(userState.currentPage));
 			
-			InlineKeyboardMarkup showKeyboard = new InlineKeyboardMarkup();
-			InlineKeyboardButton back = new InlineKeyboardButton(); back.setText("<");
-			InlineKeyboardButton next = new InlineKeyboardButton(); next.setText(">");	
-    	InlineKeyboardButton allPages = new InlineKeyboardButton(); allPages.setText("[" + (userState.currentPage+1) + "/" + (userState.allWords.size()) + "]");
-			back.setCallbackData("back"); next.setCallbackData("next"); allPages.setCallbackData("toMain");
+				InlineKeyboardMarkup showKeyboard = new InlineKeyboardMarkup();
+				InlineKeyboardButton back = new InlineKeyboardButton(); back.setText("<");
+				InlineKeyboardButton next = new InlineKeyboardButton(); next.setText(">");	
+				InlineKeyboardButton allPages = new InlineKeyboardButton(); allPages.setText("[" + (userState.currentPage+1) + "/" + (userState.allWords.size()) + "]");
+				back.setCallbackData("back"); next.setCallbackData("next"); allPages.setCallbackData("toMain");
 			
-			List<InlineKeyboardButton> row = Arrays.asList(back, next);
-			showKeyboard.setKeyboard(Arrays.asList(
-					row,
-					Collections.singletonList(allPages)
-					));
-			message.setReplyMarkup(showKeyboard);
+				List<InlineKeyboardButton> row = Arrays.asList(back, next);
+				showKeyboard.setKeyboard(Arrays.asList(
+						row,
+						Collections.singletonList(allPages)
+						));
+				message.setReplyMarkup(showKeyboard);
+			}
+			catch(NumberFormatException e){
+				e.printStackTrace();
+				message.setText("Ошибка! Номер задания не является числом");
+				return message;
+			}
+	
 		}
 		else if(messageText.contains("/adm")){
 			UserStateManager.getUserState(chatId).isSetting = false; 
@@ -66,39 +87,40 @@ public class AdminCommands{
 		}
 		return message;
 	}
+
 	public EditMessageText showBack(long callbackChatId, long callbackMessageId){
-    UserState userState = UserStateManager.getUserState(callbackChatId);
-		userState.currentPage = (userState.currentPage > 0) ? userState.currentPage-1 : 0;
-    EditMessageText editMessage = createEditMessage(callbackChatId, callbackMessageId);
+    		UserState userState = UserStateManager.getUserState(callbackChatId);
+		userState.currentPage = (userState.currentPage > 0) ? userState.currentPage-1 : userState.allWords.size()-1;
+    		EditMessageText editMessage = createEditMessage(callbackChatId, callbackMessageId);
 		editMessage.setText(userState.allWords.get(userState.currentPage));
 		return editMessage;
 	}
 	public EditMessageText showNext(long callbackChatId, long callbackMessageId){
 		UserState userState = UserStateManager.getUserState(callbackChatId);
-    userState.currentPage = (userState.currentPage < userState.allWords.size()) ? userState.currentPage+1 : userState.allWords.size()-1;
-    EditMessageText editMessage = createEditMessage(callbackChatId, callbackMessageId);
-    editMessage.setText(userState.allWords.get(userState.currentPage));
-  	return editMessage;
+    		userState.currentPage = (userState.currentPage < userState.allWords.size()-1) ? userState.currentPage+1 : 0;
+    		EditMessageText editMessage = createEditMessage(callbackChatId, callbackMessageId);
+    		editMessage.setText(userState.allWords.get(userState.currentPage));
+  		return editMessage;
 	}
+
 	private EditMessageText createEditMessage (long callbackChatId, long callbackMessageId){
 		UserState userState = UserStateManager.getUserState(callbackChatId);
 		InlineKeyboardMarkup showKeyboard = new InlineKeyboardMarkup();
-    InlineKeyboardButton back = new InlineKeyboardButton(); back.setText("<");
-    InlineKeyboardButton next = new InlineKeyboardButton(); next.setText(">");
-    InlineKeyboardButton allPages = new InlineKeyboardButton(); allPages.setText("[" + (userState.currentPage+1) + "/" + (userState.allWords.size()) + "]");
-   	back.setCallbackData("back"); next.setCallbackData("next"); allPages.setCallbackData("toMain");
+    		InlineKeyboardButton back = new InlineKeyboardButton(); back.setText("<");
+    		InlineKeyboardButton next = new InlineKeyboardButton(); next.setText(">");
+    		InlineKeyboardButton allPages = new InlineKeyboardButton(); allPages.setText("[" + (userState.currentPage+1) + "/" + (userState.allWords.size()) + "]");
+   		back.setCallbackData("back"); next.setCallbackData("next"); allPages.setCallbackData("toMain");
 		List<InlineKeyboardButton> row = Arrays.asList(back, next);
-    showKeyboard.setKeyboard(Arrays.asList(
+    		showKeyboard.setKeyboard(Arrays.asList(
 					row,
 					Collections.singletonList(allPages)
-					));
-		
+					));	
 		EditMessageText editMessage = new EditMessageText();
-    editMessage.setChatId(String.valueOf(callbackChatId));
-    editMessage.setMessageId((int) callbackMessageId);
-    editMessage.setReplyMarkup(showKeyboard);
-    editMessage.setText("Error 404");
+    		editMessage.setChatId(String.valueOf(callbackChatId));
+    		editMessage.setMessageId((int) callbackMessageId);
+    		editMessage.setReplyMarkup(showKeyboard);
+    		editMessage.setText("Error 404");
 	
-  	return editMessage;
+  		return editMessage;
 	}
 }

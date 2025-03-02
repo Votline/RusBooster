@@ -31,7 +31,7 @@ public class Words{
 		}
 
 	}
-	public String addWord(String name, String explanation, String task_id){
+	public String addWord(String name, String explanation, int task_id){
 		createTable();
 		try(Connection conn = DriverManager.getConnection(url)){
 			if(checkBase(name, task_id)){
@@ -44,7 +44,7 @@ public class Words{
 			PreparedStatement pstmt = conn.prepareStatement(sql);
 			pstmt.setString(1, name);
 			pstmt.setString(2, explanation);
-			pstmt.setString(3, task_id);
+			pstmt.setInt(3, task_id);
 			pstmt.executeUpdate();
 			message = "Добавил слово " + name + ". Значение: " + explanation + ". Задание: " + task_id + ".";
 		}
@@ -55,7 +55,7 @@ public class Words{
 
 	}
 
-	public String removeWord(String name, String task_id){
+	public String removeWord(String name, int task_id){
 		try(Connection conn = DriverManager.getConnection(url)){
 			if( !(checkBase(name, task_id)) ){
 				message = "Слово " + name + " для задания " + task_id + " не существует в базе данных.";
@@ -65,7 +65,7 @@ public class Words{
 			sql = "DELETE FROM words WHERE word = ? AND task_id = ?";
 			PreparedStatement pstmt = conn.prepareStatement(sql);
 			pstmt.setString(1, name);
-			pstmt.setString(2, task_id);
+			pstmt.setInt(2, task_id);
 			pstmt.executeUpdate();
 			message = "Удалил слово " + name + " для задания " + task_id + " из базы данных.";
 		}
@@ -76,25 +76,48 @@ public class Words{
 		return message;
 	}
 
-	public List<String> showAllBase(String task_id){
+	public List<String> showAllBase(int task_id, String whatNeed){
 		List<String> allWords = new ArrayList<>(); int cnt = 0;
 		try(Connection conn = DriverManager.getConnection(url)){
 			sql = "SELECT word, explanation FROM words WHERE task_id = ?";
+			if(!"null".equals(whatNeed)){
+				sql += "AND explanation COLLATE utf8mb4_bin LIKE ?";	
+			}
 			PreparedStatement pstmt = conn.prepareStatement(sql);
-			pstmt.setString(1, task_id);
+			pstmt.setInt(1, task_id);
+			if(!"null".equals(whatNeed)){
+				pstmt.setString(2, "%" + whatNeed + "%");
+			}
 			ResultSet result = pstmt.executeQuery();
-			message = "";
+
+			StringBuilder message = new StringBuilder();
 			while(result.next()){
-				cnt++;
 				String word = result.getString("word");
 				String explanation = result.getString("explanation");
-				message += "Слово: " + "\"" + word + "\"" + ". Значение: " + "\"" +  explanation + "\"" +  ". Номер задания: " + "\"" +  task_id + "\"" + "\n \n";
+				
+				if(!"null".equals(whatNeed) && whatNeed.length() <= 1){
+					String potentialWord = explanation.split(" ")[0];
+					if(!potentialWord.contains(whatNeed)){
+						continue;
+					}
+				}
+
+				cnt++;
+				message.append("Слово: \"")
+					.append(word)
+					.append("\". Значение: \"")
+					.append(explanation)
+					.append("\". Номер задания: \"")
+					.append(task_id)
+					.append("\"\n\n");
 				if(cnt == 5){
-					allWords.add(message);
-					message = "";
+					allWords.add(message.toString());
+					message.setLength(0);
 					cnt = 0;
 				}
 			}
+			if(cnt != 0) {allWords.add(message.toString());}
+			if(allWords.isEmpty()){allWords.add("Ничего не найдено");}
 		}
 		catch(SQLException e){
 			e.printStackTrace();
@@ -102,12 +125,12 @@ public class Words{
 		return allWords;
 	}
 
-	private boolean checkBase(String name, String task_id){
+	private boolean checkBase(String name, int task_id){
 		try(Connection conn = DriverManager.getConnection(url)){
 			sql = "SELECT 1 FROM words WHERE word = ? AND task_id = ?";
 			PreparedStatement checkPSTMT = conn.prepareStatement(sql);
 			checkPSTMT.setString(1, name);
-			checkPSTMT.setString(2, task_id);
+			checkPSTMT.setInt(2, task_id);
 			if( (checkPSTMT.executeQuery()).next() ){
 				return true;
 			}

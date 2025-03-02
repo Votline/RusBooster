@@ -57,10 +57,8 @@ public class ReplyKeyboard{
 			userState.isChoosing = true;
 		}
 		else if(messageText.equals("Проверить знания")){
-			System.out.println("Проврить знания1");
 			userState.isChoosing = false; userState.isSetting = false;
 			messageMenu = functional.makeTask(userId);
-			System.out.println("Проврить знания2");
 
 			if(messageMenu.getText() != "Такого задания ещё нет в RusBooster") {
 				userState.isChecking = true;
