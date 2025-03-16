@@ -87,7 +87,7 @@ public class RusBooster extends TelegramLongPollingBot{
 			return;
 		}
 
-		if(messageText.contains("/adm") && userId == 5459965917L){
+		if( ( messageText.contains("/adm") || messageText.contains("/guide") )&& userId == 5459965917L){
 			try{this.execute(adminCommands.dataBase(messageText, chatId));}
 			catch(TelegramApiException e){e.printStackTrace();}
 		}

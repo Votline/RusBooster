@@ -28,12 +28,12 @@ public class Statistic{
 			sql = "CREATE TABLE IF NOT EXISTS statistics ("+
 				"user_id LONG NOT NULL UNIQUE," +
 				"chat_id LONG NOT NULL UNIQUE," +
-				"current_task INTEGER DEFAULT 0," +
-				"current_score INTEGER DEFAULT 0," +
+				"current_task INTEGER DEFAULT '0'," +
+				"current_score INTEGER DEFAULT '0'," +
 				"baddest_task INTEGER DEFAULT '0'," +
-				"baddest_score INTEGER DEFAULT 0," +
+				"baddest_score INTEGER DEFAULT '0'," +
 				"better_task INTEGER DEFAULT '0'," +
-				"better_score INTEGER DEFAULT 0," +
+				"better_score INTEGER DEFAULT '0'," +
 				"last_Active_Date INTEGER  DEFAULT '0'," +
 				"streak INTEGER DEFAULT '0'," +
 				"timeZone INTEGER DEFAULT '0'," +

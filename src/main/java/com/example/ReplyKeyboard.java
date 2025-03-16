@@ -36,7 +36,8 @@ public class ReplyKeyboard{
 	private Statistic statistic = new Statistic();
 	private SendMessage messageMenu = new SendMessage();
 	private MainFunctional functional = new MainFunctional();
-	
+	private GuideFunctional guideFunc = new GuideFunctional();
+
 	public SendMessage createMenu(Message message, long chatId, long userId){
 		String messageText = "";
 		String userName = "";
@@ -55,6 +56,9 @@ public class ReplyKeyboard{
 		if(messageText.equals("Выбрать задание") && !userState.isChoosing && !userState.isChecking && !userState.isSetting){
 			messageMenu = check.createMenu(chatId, userId);
 			userState.isChoosing = true;
+		}
+		else if(messageText.equals("Гайд к заданию") && !userState.isChoosing && !userState.isChecking && !userState.isSetting){
+			messageMenu = guideFunc.sendGuide(userId);
 		}
 		else if(messageText.equals("Проверить знания")){
 			userState.isChoosing = false; userState.isSetting = false;
@@ -107,6 +111,9 @@ public class ReplyKeyboard{
 }
 
 class MainKeyboard{
+	private String url = "jdbc:sqlite:" + System.getProperty("user.dir") + "/statistic.db";
+	private String sql;
+
 	public SendMessage createMenu(long chatId){
 		SendMessage message = new SendMessage();
 		message.setChatId(String.valueOf(chatId));
@@ -121,6 +128,21 @@ class MainKeyboard{
 		row.add(new KeyboardButton("Проверить знания"));
 		row.add(new KeyboardButton("Статистика"));
 		keyboard.add(row);
+		
+		try(Connection conn = DriverManager.getConnection(url)){
+			sql = "SELECT current_task FROM statistics WHERE user_id = ?";
+			PreparedStatement pstmt = conn.prepareStatement(sql);
+			pstmt.setLong(1, chatId);
+			ResultSet result = pstmt.executeQuery();
+			if(result.getInt("current_task") != 0){		
+				KeyboardRow guideRow = new KeyboardRow();
+				guideRow.add(new KeyboardButton("Гайд к заданию"));
+				keyboard.add(guideRow);
+			}
+		}
+		catch(SQLException e){
+			e.printStackTrace();
+		}
 
 		keyboardMarkup.setKeyboard(keyboard);
 		message.setReplyMarkup(keyboardMarkup);
