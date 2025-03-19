@@ -9,6 +9,8 @@ import java.sql.ResultSet;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
@@ -124,7 +126,7 @@ public class Statistic{
 		int streak = 0;
 		
 
-    		try(Connection conn = DriverManager.getConnection(url)){
+    	try(Connection conn = DriverManager.getConnection(url)){
   			sql = "SELECT last_Active_Date, streak, timeZone FROM statistics WHERE user_id = ?";
    			PreparedStatement pstmt = conn.prepareStatement(sql);
    			pstmt.setLong(1, userId);
@@ -229,6 +231,7 @@ public class Statistic{
 		}
 		return timeZone;
 	}
+
 	public SendMessage printTimeZone(long chatId){
 		UserStateManager.getUserState(chatId).isSetting = true;
 		SendMessage sendMessage = new SendMessage();
@@ -241,10 +244,15 @@ public class Statistic{
 					"Текущий часовой пояс: " + findUserOffset(chatId) + " от МСК."
 		); sendMessage.setText(sendMessage.getText() + "\nНапишите свою разницу во времени от МСК:");	
 		InlineKeyboardMarkup setKeyboard = new InlineKeyboardMarkup();		
-		InlineKeyboardButton goBack = new InlineKeyboardButton(); goBack.setText("Вернуться в главное меню");
-		goBack.setCallbackData("cancelTask");
+		InlineKeyboardButton goBack = new InlineKeyboardButton(); goBack.setText("Вернуться в главное меню"); 
+		goBack.setCallbackData("toMain");
+
+		setKeyboard.setKeyboard(Arrays.asList(Collections.singletonList(goBack)));
+		sendMessage.setReplyMarkup(setKeyboard);
+
 		return sendMessage;
 	}
+
 	public String setTimeZone(long userId, String messageText){
 		try(Connection conn = DriverManager.getConnection(url)){
 			sql = "UPDATE statistics SET timeZone = ? WHERE user_id = ?";
@@ -252,7 +260,7 @@ public class Statistic{
 			pstmt.setInt(1, Integer.parseInt(messageText));
 			pstmt.setLong(2, userId);		
 			pstmt.executeUpdate();
-			messageText = ( (Integer.parseInt(messageText) > 0) ? 
+			messageText = ( (Integer.parseInt(messageText) > -15 && (Integer.parseInt(messageText) < 22) ) ? 
 					"Успешно! Ваш часовой пояс изменён на " + messageText + " от МСК" :
 					"Успешно! Ваш часовой пояс изменён на " + messageText + " от МСК");
 		}

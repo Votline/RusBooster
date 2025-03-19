@@ -6,7 +6,6 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
 import java.util.Collections;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -103,7 +102,6 @@ public class AdminCommands{
 					message.setText(e.getMessage());
 				}
 			}
-
 		}
 		else{
 			String text = "Команды: " + "\"" + parts[1] + "\"" +  " не существует";
@@ -133,7 +131,7 @@ public class AdminCommands{
     		InlineKeyboardButton back = new InlineKeyboardButton(); back.setText("<");
     		InlineKeyboardButton next = new InlineKeyboardButton(); next.setText(">");
     		InlineKeyboardButton allPages = new InlineKeyboardButton(); allPages.setText("[" + (userState.currentPage+1) + "/" + (userState.allWords.size()) + "]");
-   		back.setCallbackData("back"); next.setCallbackData("next"); allPages.setCallbackData("toMain");
+   			back.setCallbackData("back"); next.setCallbackData("next"); allPages.setCallbackData("toMain");
 		List<InlineKeyboardButton> row = Arrays.asList(back, next);
     		showKeyboard.setKeyboard(Arrays.asList(
 					row,
