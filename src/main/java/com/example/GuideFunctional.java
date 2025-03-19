@@ -13,6 +13,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
 import java.util.Collections;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -57,29 +58,38 @@ public class GuideFunctional{
 	public SendMessage sendGuide(long userId){
 		String url = "jdbc:sqlite:" + System.getProperty("user.dir") + "/guide.db";
 		String sql;
+		
 		SendMessage guideMessage = new SendMessage();
+		guideMessage.setChatId(String.valueOf(userId));
+
 		try(Connection conn = DriverManager.getConnection(url)){
+
 			sql = "SELECT guide FROM guides WHERE task_id = ?";
 			PreparedStatement sendPstmt = conn.prepareStatement(sql);
 			sendPstmt.setInt(1, getUserTaskId(userId));
+
 			ResultSet result = sendPstmt.executeQuery();
-			String message = "Error";
+			
+
 			if(result.next()){
+				UserState userState = UserStateManager.getUserState(userId);
+				userState.allWords = getGuide(getUserTaskId(userId));
+				userState.currentPage = 0;
+				guideMessage.setText(userState.allWords.get(userState.currentPage));
+
 				InlineKeyboardMarkup guideKeyboard = new InlineKeyboardMarkup();
-					InlineKeyboardButton back = new InlineKeyboardButton();
-					InlineKeyboardButton next = new InlineKeyboardButton();
-					InlineKeyboardButton allPages = new InlineKeyboardButton();
-					back.setCallbackData("back"); next.setCallbackData("next"); allPages.setCallbackData("toMain");
+					InlineKeyboardButton back = new InlineKeyboardButton(); back.setCallbackData("back"); 
+					InlineKeyboardButton next = new InlineKeyboardButton(); next.setCallbackData("next");
+					InlineKeyboardButton allPages = new InlineKeyboardButton(); allPages.setCallbackData("toMain");
+					back.setText("<"); next.setText(">"); allPages.setText("[" + (userState.currentPage+1) + "/" + (userState.allWords.size()) + "]");
+
 				List<InlineKeyboardButton> row = Arrays.asList(back, next);
 				guideKeyboard.setKeyboard(Arrays.asList(
 					row, 
 					Collections.singletonList(allPages)
 				));
-				message = result.getString("guide");
-			}
-			guideMessage.setChatId(String.valueOf(userId));
-			guideMessage.setText(message);
-			
+				guideMessage.setReplyMarkup(guideKeyboard);
+			}			
 			sendPstmt.close(); result.close();
 		}
 		catch(SQLException e){
@@ -119,34 +129,39 @@ public class GuideFunctional{
 			e.printStackTrace();
 		}
 	}
-	private StringBuilder showAllBase(int taskId){
+	private List<String> getGuide(int taskId){
 		String url = "jdbc:sqlite:" + System.getProperty("user.dir") + "/guide.db";
 		String sql;
 
-		StringBuilder message = new StringBuilder();
+		List<String> message = new ArrayList<>();
 		try(Connection conn = DriverManager.getConnection(url)){
 			sql = "SELECT guide FROM guides WHERE task_id = ?";
 			
 			PreparedStatement pstmt = conn.prepareStatement(sql);
-			pstmt.setInt(0, taskId);
+			pstmt.setInt(1, taskId);
+
 			ResultSet result = pstmt.executeQuery();
-			
 			if(result.next()){
 				String guide = result.getString("guide");
 				String[] themes = guide.split("!");
+			
 				for(String theme : themes){
-					if(theme.length() > 511){
+					if(theme.length() > 512){
 						int maxLenght = 509;
 						for(int i = 0; i < theme.length(); i += maxLenght){
+							if(theme.length() - 509 <= 16 || i > 0 && theme.length() - i <= 16){
+								message.add(theme.substring(i));
+								break;
+							}
 							String part = theme.substring(i, Math.min(i + maxLenght, theme.length()));
-							if(i + maxLenght < theme.length() && theme.length() - i + maxLenght <= 16 ){
+							if(i + maxLenght < theme.length()){
 								part += "...";
 							}
-							message.append(part);
+							message.add(part);
 						}
 					}
 					else{
-						message.append(theme);
+						message.add(theme);
 					}
 				}
 			}

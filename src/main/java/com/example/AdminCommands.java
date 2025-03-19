@@ -52,7 +52,7 @@ public class AdminCommands{
 			}
 			else if(messageText.contains("/showall")){
 				try{
-					int task_id =Integer.parseInt(parts[2]);
+					int task_id = Integer.parseInt(parts[2]);
 					UserState userState = UserStateManager.getUserState(chatId);
 					userState.allWords = words.showAllBase(task_id, parts[3]);
 					userState.isSetting = true;
@@ -81,10 +81,10 @@ public class AdminCommands{
 			}
 		}
 		else if(messageText.contains("/guide")){
+			String[] guideParts = messageText.split(" ", 4);
 			if(messageText.contains("/add")){
 				try{
-					guideFunc.insertGuide(Integer.parseInt(parts[2]), parts[3]);
-					System.out.println("Добавил");
+					guideFunc.insertGuide(Integer.parseInt(guideParts[2]), guideParts[3]);
 					message.setText("Гайд успешно добавлен!");
 				}
 				catch(NumberFormatException e){
@@ -94,7 +94,7 @@ public class AdminCommands{
 			}
 			else if(messageText.contains("/remove")){
 				try{
-					guideFunc.removeGuide(Integer.parseInt(parts[2]));
+					guideFunc.removeGuide(Integer.parseInt(guideParts[2]));
 					message.setText("Гайд успешно удалён!");
 				}
 				catch(NumberFormatException e){
@@ -111,9 +111,9 @@ public class AdminCommands{
 	}
 
 	public EditMessageText showBack(long callbackChatId, long callbackMessageId){
-    		UserState userState = UserStateManager.getUserState(callbackChatId);
+    	UserState userState = UserStateManager.getUserState(callbackChatId);
 		userState.currentPage = (userState.currentPage > 0) ? userState.currentPage-1 : userState.allWords.size()-1;
-    		EditMessageText editMessage = createEditMessage(callbackChatId, callbackMessageId);
+    	EditMessageText editMessage = createEditMessage(callbackChatId, callbackMessageId);
 		editMessage.setText(userState.allWords.get(userState.currentPage));
 		return editMessage;
 	}
