@@ -294,6 +294,7 @@ class TaskResult {
 
 class Number9to12 {
 	public static TaskResult createTask(MainFunctional functional, Random random, List<TaskMap> task, int wordCount, long userId) {
+		UserState userState = UserStateManager.getUserState(userId);
 		String message = "Укажите варианты ответов, в которых во всех словах одного ряда пропущена одна и та же буква. Запишите номера ответов.\n";
 		String explanations = "";
 		
@@ -312,7 +313,7 @@ class Number9to12 {
 		}
 				
 		String answer = functional.findAnswer(explanations, userId);
-		if(answer.equals("Совпадений нет. Верный ответ: 0")){
+		if(answer.equals("Совпадений нет. Верный ответ: 0") || userState.answer <= 1){
 			return createTask(functional, random, task, wordCount, userId);
 		}
 		return new TaskResult(message, answer, explanations);
