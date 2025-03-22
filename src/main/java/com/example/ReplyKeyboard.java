@@ -36,7 +36,8 @@ public class ReplyKeyboard{
 	private Statistic statistic = new Statistic();
 	private SendMessage messageMenu = new SendMessage();
 	private MainFunctional functional = new MainFunctional();
-	
+	private GuideFunctional guideFunc = new GuideFunctional();
+
 	public SendMessage createMenu(Message message, long chatId, long userId){
 		String messageText = "";
 		String userName = "";
@@ -52,13 +53,17 @@ public class ReplyKeyboard{
 		messageMenu.setChatId(String.valueOf(chatId));
 		messageMenu.setReplyMarkup(null);
 
-		if(messageText.equals("Выбрать задание") && !userState.isChoosing && !userState.isChecking){
+		if(messageText.equals("Выбрать задание") && !userState.isChoosing && !userState.isChecking && !userState.isSetting){
 			messageMenu = check.createMenu(chatId, userId);
 			userState.isChoosing = true;
 		}
+		else if(messageText.equals("Гайд к заданию") && !userState.isChoosing && !userState.isChecking && !userState.isSetting){
+			messageMenu = guideFunc.sendGuide(userId);
+		}
 		else if(messageText.equals("Проверить знания")){
-			userState.isChoosing = false;
+			userState.isChoosing = false; userState.isSetting = false;
 			messageMenu = functional.makeTask(userId);
+
 			if(messageMenu.getText() != "Такого задания ещё нет в RusBooster") {
 				userState.isChecking = true;
 			}
@@ -67,16 +72,25 @@ public class ReplyKeyboard{
 				messageMenu.setText("Такого задания ещё нет в RusBooster");
 			}
 		}
-		else if(messageText.equals("Статистика") && !userState.isChecking){
-			userState.isChoosing = false;
+		else if(messageText.equals("Статистика") && !userState.isChecking && !userState.isSetting){
+			userState.isChoosing = false; userState.isSetting = false;
 			messageMenu.setText(statistic.getStatistic(userName, userId));
+			InlineKeyboardMarkup statKeyboard = new InlineKeyboardMarkup();
+			InlineKeyboardButton chooseTimeZone = new InlineKeyboardButton(); chooseTimeZone.setText("Указать часовой пояс");
+			InlineKeyboardButton goBack = new InlineKeyboardButton(); goBack.setText("Вернуться в главное меню");
+			chooseTimeZone.setCallbackData("chooseTimeZone"); goBack.setCallbackData("toMain");
+			statKeyboard.setKeyboard(Arrays.asList(
+						Collections.singletonList(chooseTimeZone),
+						Collections.singletonList(goBack)));
+			messageMenu.setReplyMarkup(statKeyboard);
 		}
 
 		else{
 			messageMenu = main.createMenu(chatId);
+			
 			if(userState.isChoosing){
 				userState.isChoosing = false;
-				messageMenu.setText(statistic.chooseExercise(userId, messageText));
+				messageMenu.setText(statistic.chooseExercise(userId, chatId, messageText));
 				if(messageMenu.getText().equals("Перенапровляемся...")){
 					messageMenu = main.createMenu(chatId);
 				}
@@ -84,14 +98,22 @@ public class ReplyKeyboard{
 			
 			if(userState.isChecking){
 				userState.isChecking = false;
-				messageMenu = functional.explanationTask(chatId, userId, messageText);
+				messageMenu = functional.responseForTask(chatId, userId, messageText);
+			}
+			else if(userState.isSetting && messageText != ""){
+				userState.isSetting = false;
+				messageMenu = main.createMenu(chatId);
+				messageMenu.setText(statistic.setTimeZone(userId, messageText));	
 			}
 		}
-		return messageMenu;
+		return !userState.isSetting ? messageMenu : null;
 	}
 }
 
 class MainKeyboard{
+	private String url = "jdbc:sqlite:" + System.getProperty("user.dir") + "/statistic.db";
+	private String sql;
+
 	public SendMessage createMenu(long chatId){
 		SendMessage message = new SendMessage();
 		message.setChatId(String.valueOf(chatId));
@@ -106,6 +128,21 @@ class MainKeyboard{
 		row.add(new KeyboardButton("Проверить знания"));
 		row.add(new KeyboardButton("Статистика"));
 		keyboard.add(row);
+		
+		try(Connection conn = DriverManager.getConnection(url)){
+			sql = "SELECT current_task FROM statistics WHERE user_id = ?";
+			PreparedStatement pstmt = conn.prepareStatement(sql);
+			pstmt.setLong(1, chatId);
+			ResultSet result = pstmt.executeQuery();
+			if(result.getInt("current_task") != 0){		
+				KeyboardRow guideRow = new KeyboardRow();
+				guideRow.add(new KeyboardButton("Гайд к заданию"));
+				keyboard.add(guideRow);
+			}
+		}
+		catch(SQLException e){
+			e.printStackTrace();
+		}
 
 		keyboardMarkup.setKeyboard(keyboard);
 		message.setReplyMarkup(keyboardMarkup);
@@ -128,7 +165,7 @@ class CheckKeyboard{
 		InlineKeyboardButton cancelChoose = new InlineKeyboardButton();
 
 		cancelChoose.setText("В главное меню");
-		cancelChoose.setCallbackData("cancelChoose");
+		cancelChoose.setCallbackData("toMain");
 		baddestTask.setCallbackData("baddestTask");
 
 		try(Connection conn = DriverManager.getConnection(url)){
@@ -144,10 +181,15 @@ class CheckKeyboard{
 						Collections.singletonList(cancelChoose)
 					));
 				}
+				else{
+					keyboardMarkup.setKeyboard(Collections.singletonList(Collections.singletonList(cancelChoose)));
+				}
 			}
 			else{
 				keyboardMarkup.setKeyboard(Collections.singletonList(Collections.singletonList(cancelChoose)));
 			}
+		
+			pstmt.close(); result.close();
 		}
 		catch(SQLException e){
 			e.printStackTrace();

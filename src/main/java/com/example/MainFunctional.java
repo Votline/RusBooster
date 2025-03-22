@@ -3,6 +3,7 @@ package com.example;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
@@ -31,24 +32,22 @@ public class MainFunctional{
 	private String urlStat = "jdbc:sqlite:" + System.getProperty("user.dir") + "/statistic.db";
 	private String url = "jdbc:sqlite:" + System.getProperty("user.dir") + "/words.db";
 	
-	private int task_Id;
-	private String sql;
-
-	private String answer;
-	private int answerForTask;
-
-	private String returnMessage;
 	private Random random = new Random();
-	private List<TaskMap> wordsForTask = new ArrayList<>();
-
 	private Statistic Statistic = new Statistic();
-
+	
 	public SendMessage makeTask(long userId){
+		UserState userState = UserStateManager.getUserState(userId);
+		List<TaskMap> wordsForTask = new ArrayList<>();
+		String returnMessage = "";
+		String sql = "";
+		int taskId = 0;
+
 		try(Connection connSet = DriverManager.getConnection(urlStat)){
 			sql = "SELECT current_task FROM statistics WHERE user_id = ?";
 			PreparedStatement pstmt = connSet.prepareStatement(sql);
 			pstmt.setLong(1, userId);
-			task_Id = pstmt.executeQuery().getInt("current_task");
+			taskId = pstmt.executeQuery().getInt("current_task");
+			userState.currentTask = taskId;
 		}
 		catch(SQLException e){
 			e.printStackTrace();
@@ -58,7 +57,7 @@ public class MainFunctional{
 			wordsForTask.clear();
 			sql = "SELECT word, explanation FROM words WHERE task_id = ?";
 			PreparedStatement pstmt = conn.prepareStatement(sql);
-			pstmt.setInt(1, task_Id);
+			pstmt.setInt(1, taskId);
 			ResultSet result = pstmt.executeQuery();
 
 			while(result.next()){
@@ -70,21 +69,21 @@ public class MainFunctional{
 		catch(SQLException e){
 			e.printStackTrace();
 		}
-		
-		switch(task_Id){
+
+		switch(taskId){
 			case 9:
 			case 10:
-				TaskResult result = Number9to12.createTask(this, random, wordsForTask, 3);
+				TaskResult result = Number9to12.createTask(this, random, wordsForTask, 3, userId);
 				returnMessage = result.message;
-				answer = result.answer;
-				UserStateManager.getUserState(userId).explanations = result.explanations;
+				userState.explanations = result.explanations;
+				userState.outputAnswer = result.answer;
 				break;
 			case 11:
 			case 12:
-				result = Number9to12.createTask(this, random, wordsForTask, 2);
+				result = Number9to12.createTask(this, random, wordsForTask, 2, userId);
 				returnMessage = result.message;
-				answer = result.answer;
-				UserStateManager.getUserState(userId).explanations = result.explanations;
+				userState.explanations = result.explanations;
+				userState.outputAnswer = result.answer;
 				break;
 			default:
 				returnMessage = "Такого задания ещё нет в RusBooster";
@@ -106,18 +105,20 @@ public class MainFunctional{
 		return sendMessage;
 	}
 
-	public SendMessage explanationTask(long chatId, long userId, String message){
-		UserStateManager.getUserState(userId).isActive = true;
+	public SendMessage responseForTask(long chatId, long userId, String message){
+		UserState userState = UserStateManager.getUserState(userId);
+		userState.isActive = true;
+
 		String additionalMessage = Statistic.checkStreak(userId);
-		String sendMessageText;
+		String sendMessageText = "";
 
 		SendMessage sendMessage = new SendMessage();
 		sendMessage.setChatId(String.valueOf(chatId));
 		if(additionalMessage != null){	
-			sendMessageText = "Ответ на задание №" + task_Id + ": " + answer + "\n\n" + additionalMessage;
+			sendMessageText = "Ответ на задание №" + userState.currentTask + ": " + userState.outputAnswer + "\n\n" + additionalMessage;
 		}
 		else {
-			sendMessageText = "Ответ на задание №" + task_Id + ": " + answer;
+			sendMessageText = "Ответ на задание №" + userState.currentTask + ": " + userState.outputAnswer;
 		}
 		sendMessage.setText(sendMessageText);
 
@@ -148,10 +149,11 @@ public class MainFunctional{
 
 
 	private void checkAnswer(int userAnswer, long userId){
+		UserState userState = UserStateManager.getUserState(userId);
 
 		try(Connection conn = DriverManager.getConnection(urlStat)){
 			int current_task = 0, current_score = 0, baddest_task = 0, baddest_score = 0, better_task = 0, better_score = 0;
-			sql = "SELECT current_task, current_score, baddest_task, baddest_score, better_task, better_score FROM statistics WHERE user_id = ?";
+			String sql = "SELECT current_task, current_score, baddest_task, baddest_score, better_task, better_score FROM statistics WHERE user_id = ?";
 			PreparedStatement pstmt = conn.prepareStatement(sql);
 			pstmt.setLong(1, userId);
 			ResultSet result = pstmt.executeQuery();
@@ -165,7 +167,7 @@ public class MainFunctional{
 				better_score = result.getInt("better_score");	
 			}
 
-			if(userAnswer == answerForTask){current_score += 1;}
+			if(userAnswer == userState.answer){current_score += 1;}
 			else{current_score -= 1;}
 
 			if(current_score < baddest_score){
@@ -192,13 +194,16 @@ public class MainFunctional{
 		}
 	}
 
-	public String findAnswer(String values){
+	public String findAnswer(String values, long userId){
+		UserState userState = UserStateManager.getUserState(userId);
+		String output = "";
+		
 		if(values == null){
-			answer = "Ошибка, нет значений для поиска";
-			return answer;
+			output = "Ошибка, нет значений для поиска";
+			return output;
 		}
-		answer = "";
-		answerForTask = 0;
+
+		userState.answer = 0;
 		String answerForOutput = "";
 		String[] rows = values.strip().split("\n\n\n");
 		
@@ -217,20 +222,20 @@ public class MainFunctional{
 				row = removeBeforeDot(row);
 			}
 			if(allMatch) {
-				answer += "\n" + rows[i];
-				answerForTask += i+1;
+				output += "\n" + rows[i];
+				userState.answer += i+1;
 				answerForOutput += String.valueOf(i+1);
 			}
 		}
-		if(answer.isEmpty()) {
-			answer = "Совпадений нет. Верный ответ: 0";
-			answerForTask = 0;
+		if(output.isEmpty()) {
+			output = "Совпадений нет. Верный ответ: 0";
+			userState.answer = 0;
 		}
 		else{
-			answer = answerForOutput + answer;
+			output = answerForOutput + output;
 		}
 
-		return answer;
+		return output;
 	}
 
 
@@ -288,7 +293,8 @@ class TaskResult {
 }
 
 class Number9to12 {
-	public static TaskResult createTask(MainFunctional functional, Random random, List<TaskMap> task, int wordCount) {
+	public static TaskResult createTask(MainFunctional functional, Random random, List<TaskMap> task, int wordCount, long userId) {
+		UserState userState = UserStateManager.getUserState(userId);
 		String message = "Укажите варианты ответов, в которых во всех словах одного ряда пропущена одна и та же буква. Запишите номера ответов.\n";
 		String explanations = "";
 		
@@ -306,9 +312,9 @@ class Number9to12 {
 			explanations += "\n";
 		}
 				
-		String answer = functional.findAnswer(explanations);
-		if(answer.equals("Совпадений нет. Верный ответ: 0")){
-			return createTask(functional, random, task, wordCount);
+		String answer = functional.findAnswer(explanations, userId);
+		if(answer.equals("Совпадений нет. Верный ответ: 0") || userState.answer <= 1){
+			return createTask(functional, random, task, wordCount, userId);
 		}
 		return new TaskResult(message, answer, explanations);
 	}
