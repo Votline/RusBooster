@@ -3,6 +3,7 @@ package guide
 import (
 	"RusBooster/internal/utils"
 	"fmt"
+	"strings"
 	sq "github.com/Masterminds/squirrel"
 	"go.uber.org/zap"
 )
@@ -56,7 +57,7 @@ func DeleteGuide(log *zap.Logger, taskId int) string {
 	return fmt.Sprintf("Успешно удалил гайд для задания №%d", taskId)
 }
 
-func ShowGuide(log *zap.Logger, taskId int) string {
+func ShowGuide(log *zap.Logger, taskId int, targetPage *int, targetSlice *[]string) string {
 	db, psql := utils.GetDb(log)
 	defer db.Close()
 
@@ -74,5 +75,9 @@ func ShowGuide(log *zap.Logger, taskId int) string {
 		log.Error("Ошибка при попытке выполнить запрос или записать его \n", zap.Error(errRow))
 		return utils.GetReturnText(false)
 	}
-	return guide
+	
+	*targetPage = 0	
+	*targetSlice = strings.Split(guide, "@")
+	
+	return (*targetSlice)[0] 
 }

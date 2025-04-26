@@ -15,11 +15,21 @@ import (
 	"strings"
 )
 
-func getTargets(message string, userState *state.UserState) (string, *int, *[]string) {
+func getTargets(message string, userState *state.UserState) (string, *int, *[]string, *tele.ReplyMarkup) {
 	if strings.HasPrefix(message, "Найденные слова: \n") {
-		return "Найденные слова: \n", &userState.CurrentPageOfFindWords, &userState.PartsOfFindWords
+		menu := keyboard.ShowWordsMenu(userState,
+			&userState.CurrentPageOfFindWords, userState.PartsOfFindWords)
+		return "Найденные слова: \n",
+			&userState.CurrentPageOfFindWords, &userState.PartsOfFindWords, menu
+	} else if strings.HasPrefix(message, "Все слова: \n") {
+		menu := keyboard.ShowWordsMenu(userState,
+			&userState.CurrentPageOfAllWords, userState.PartsOfAllWords)
+		return "Все слова: \n",
+			&userState.CurrentPageOfAllWords, &userState.PartsOfAllWords, menu
 	}
-	return "Все слова: \n", &userState.CurrentPageOfAllWords, &userState.PartsOfAllWords
+	menu := keyboard.ShowWordsMenu(userState,
+		&userState.CurrentPageOfGuide, userState.PartsOfGuide)
+	return "", &userState.CurrentPageOfGuide, &userState.PartsOfGuide, menu
 }
 
 func setUserField(log *zap.Logger, userId int64, message string, column string) (int, error) {
@@ -107,7 +117,10 @@ func HandleText(log *zap.Logger, bot *tele.Bot, con tele.Context) error {
 		}
 	case "Гайд к заданию":
 		taskId, _ := stat.GetSomething(log, userId, "current_task")
-		return con.Send(guide.ShowGuide(log, taskId))
+		menu := keyboard.ShowWordsMenu(userState, new(int), userState.PartsOfGuide)
+		text := (guide.ShowGuide(log, taskId,
+			&userState.CurrentPageOfGuide, &userState.PartsOfGuide))
+		return con.Send(text, menu)
 	case "/start":
 		userState.IsChoosing, userState.IsChecking, userState.IsSetting = false, false, false
 		return nil
@@ -115,7 +128,7 @@ func HandleText(log *zap.Logger, bot *tele.Bot, con tele.Context) error {
 		if userId == 5459965917 && utils.ContainsRune(con.Text(), "/") {
 			text := admin.HandleCommands(log, userState, userId, con.Text())
 			if strings.Contains(con.Text(), "showall") {
-				menu := keyboard.ShowWordsMenu(userState, new(int))
+				_, _, _, menu := getTargets(text, userState)
 				return con.Send(text, menu)
 			}
 			return con.Send(text)
@@ -210,13 +223,13 @@ func HandleCallback(log *zap.Logger, bot *tele.Bot, con tele.Context) error {
 		text := strings.ReplaceAll(strings.ReplaceAll(userState.Explanations, "@", ""), "$", "")
 		return con.Send(text)
 	case "ShowPreviousWords", "ShowNextWords":
-		text, targetPage, targetSlice := getTargets(con.Message().Text, userState)
+		text, targetPage, targetSlice, _ := getTargets(con.Message().Text, userState)
 		if data == "ShowPreviousWords" {
 			text += admin.ShowPreviousWords(targetPage, targetSlice)
 		} else {
 			text += admin.ShowNextWords(targetPage, targetSlice)
 		}
-		menu := keyboard.ShowWordsMenu(userState, targetPage)
+		_, _, _, menu := getTargets(con.Message().Text, userState)
 		return con.Edit(text, menu)
 	default:
 		userState.IsChoosing, userState.IsChecking, userState.IsSetting = false, false, false

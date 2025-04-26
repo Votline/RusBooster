@@ -24,6 +24,8 @@ type UserState struct {
 	CurrentPageOfAllWords  int      `json:"current_page_of_all_words"`
 	PartsOfFindWords       []string `json:"parts_of_find_words"`
 	CurrentPageOfFindWords int      `json:"current_page_of_find_words"`
+	PartsOfGuide           []string `json:"parts_of_guide"`
+	CurrentPageOfGuide     int      `json:"current_page_of_guide"`
 }
 
 var (

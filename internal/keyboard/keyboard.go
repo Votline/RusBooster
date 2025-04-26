@@ -9,11 +9,11 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
-func ShowWordsMenu(userState *state.UserState, currentPage *int) *tele.ReplyMarkup {
+func ShowWordsMenu(userState *state.UserState, currentPage *int, currentSlice []string) *tele.ReplyMarkup {
 	selector := &tele.ReplyMarkup{}
 	allPagesText := fmt.Sprintf("[%d/%d]",
 		*currentPage+1,
-		len(userState.PartsOfAllWords))
+		len(currentSlice))
 
 	btnShowPrevious := selector.Data("<", "ShowPreviousWords")
 	btnShowNext := selector.Data(">", "ShowNextWords")
