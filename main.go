@@ -26,7 +26,7 @@ func getToken() string {
 }
 
 func createLogger() *zap.Logger {
-	file, fileErr := os.OpenFile("logs/fatal.log", os.O_WRONLY, 0644)
+	file, fileErr := os.OpenFile("logs/warn.log", os.O_WRONLY, 0644)
 	if fileErr != nil {
 		panic(fileErr)
 	}
@@ -36,12 +36,12 @@ func createLogger() *zap.Logger {
 		zapcore.AddSync(os.Stdout),
 		zapcore.InfoLevel,
 	)
-	fatalCore := zapcore.NewCore(
+	warnCore := zapcore.NewCore(
 		zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig()),
 		zapcore.AddSync(file),
 		zapcore.WarnLevel,
 	)
-	combinedCore := zapcore.NewTee(consoleCore, fatalCore)
+	combinedCore := zapcore.NewTee(consoleCore, warnCore)
 	log := zap.New(combinedCore, zap.AddCaller())
 	return log
 }
