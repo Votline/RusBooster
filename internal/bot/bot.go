@@ -15,7 +15,7 @@ import (
 	"strings"
 )
 
-func getTargets(message string, userState *state.UserState) (string, *int, *[]string, *tele.ReplyMarkup) {
+func getTargets(log *zap.Logger, message string, userState *state.UserState) (string, *int, *[]string, *tele.ReplyMarkup) {
 	if strings.HasPrefix(message, "Найденные слова: \n") {
 		menu := keyboard.ShowWordsMenu(userState,
 			&userState.CurrentPageOfFindWords, userState.PartsOfFindWords)
@@ -117,9 +117,9 @@ func HandleText(log *zap.Logger, bot *tele.Bot, con tele.Context) error {
 		}
 	case "Гайд к заданию":
 		taskId, _ := stat.GetSomething(log, userId, "current_task")
-		menu := keyboard.ShowWordsMenu(userState, new(int), userState.PartsOfGuide)
 		text := (guide.ShowGuide(log, taskId,
 			&userState.CurrentPageOfGuide, &userState.PartsOfGuide))
+		menu := keyboard.ShowWordsMenu(userState, new(int), userState.PartsOfGuide)
 		return con.Send(text, menu)
 	case "/start":
 		userState.IsChoosing, userState.IsChecking, userState.IsSetting = false, false, false
@@ -128,7 +128,7 @@ func HandleText(log *zap.Logger, bot *tele.Bot, con tele.Context) error {
 		if userId == 5459965917 && utils.ContainsRune(con.Text(), "/") {
 			text := admin.HandleCommands(log, userState, userId, con.Text())
 			if strings.Contains(con.Text(), "showall") {
-				_, _, _, menu := getTargets(text, userState)
+				_, _, _, menu := getTargets(log, text, userState)
 				return con.Send(text, menu)
 			}
 			return con.Send(text)
@@ -223,14 +223,20 @@ func HandleCallback(log *zap.Logger, bot *tele.Bot, con tele.Context) error {
 		text := strings.ReplaceAll(strings.ReplaceAll(userState.Explanations, "@", ""), "$", "")
 		return con.Send(text)
 	case "ShowPreviousWords", "ShowNextWords":
-		text, targetPage, targetSlice, _ := getTargets(con.Message().Text, userState)
+		text, targetPage, targetSlice, _ := getTargets(log, con.Message().Text, userState)
+		if len(*targetSlice) == 0{
+			deleteMsgAfter(log, con, utils.GetReturnText(false))
+			return nil
+		}
 		if data == "ShowPreviousWords" {
 			text += admin.ShowPreviousWords(targetPage, targetSlice)
 		} else {
 			text += admin.ShowNextWords(targetPage, targetSlice)
 		}
-		_, _, _, menu := getTargets(con.Message().Text, userState)
+		_, _, _, menu := getTargets(log, con.Message().Text, userState)
 		return con.Edit(text, menu)
+	case "Ignore":
+		return nil
 	default:
 		userState.IsChoosing, userState.IsChecking, userState.IsSetting = false, false, false
 		return con.Send("Выберите опцию", keyboard.MainMenu())

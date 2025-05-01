@@ -1,0 +1,8 @@
+{"level":"error","ts":1746142282.1385841,"caller":"state/state.go:44","msg":"Ошибка, Redis не был инициализирован"}
+{"level":"error","ts":1746142282.1396484,"caller":"state/state.go:55","msg":"Такой записи в Redis не существует","error":"redis: nil"}
+"level":"error","ts":1746142244.413943,"caller":"state/state.go:55","msg":"Такой записи в Redis не существует","error":"redis: nil"}
+
+{"level":"error","ts":1746141402.9552903,"caller":"state/state.go:56","msg":"Такой записи в Redis не существует","error":"redis: nil"}
+{"level":"error","ts":1746141423.1781619,"caller":"state/state.go:56","msg":"Такой записи в Redis не существует","error":"redis: nil"}
+{"level":"error","ts":1746141426.3392053,"caller":"utils/utils.go:81","msg":"Ошибка при попытке удалить сообщение пользователя","error":"telegram: message to delete not found (400)"}
+{"level":"error","ts":1746141426.6395767,"caller":"utils/utils.go:81","msg":"Ошибка при попытке удалить сообщение пользователя","error":"telegram: message to delete not found (400)"}

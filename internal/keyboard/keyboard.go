@@ -79,7 +79,7 @@ func SelectMenu(log *zap.Logger, userId int64) *tele.ReplyMarkup {
 		log.Error("Ошибка при получении данных из rsdb", zap.Error(err))
 		return nil
 	}
-	btnWorstTask := selector.Data(fmt.Sprintf("Наихудшая успеваимость: №%d", worstTaskScore), " ")
+	btnWorstTask := selector.Data(fmt.Sprintf("Наихудшая успеваимость: №%d", worstTaskScore), "Ignore")
 	btnToMain := selector.Data("Вернуться в главное меню", "ToMain")
 
 	selector.Inline(
