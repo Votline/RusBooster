@@ -58,6 +58,9 @@ func GetAll(log *zap.Logger, wordsForTask map[string]string, currentTask int) er
 }
 
 func SetSomething(log *zap.Logger, word string, explanation string, taskId int) string {
+	if _, err := FindWord(log, taskId, word); err == nil {
+		return fmt.Sprintf("Слово '%s' уже существует в бд", word)
+	}
 	db, psql := utils.GetDb(log)
 	defer db.Close()
 
@@ -71,7 +74,7 @@ func SetSomething(log *zap.Logger, word string, explanation string, taskId int) 
 	if _, errExec := db.Exec(ins, args...); errExec != nil {
 		return "Ошибка при попытке выполнить запрос. Слово: " + word
 	}
-	return fmt.Sprintf("Успешно! Слово: %s\nи пояснение: %d\nдобавлены к заданию: %d", word, explanation, taskId)
+	return fmt.Sprintf("Успешно! Слово: %s\nи пояснение: %s\nдобавлены к заданию: %d", word, explanation, taskId)
 }
 
 func DeleteWord(log *zap.Logger, taskId int, word string) string {
@@ -79,7 +82,7 @@ func DeleteWord(log *zap.Logger, taskId int, word string) string {
 	defer db.Close()
 
 	req, args, err := psql.Delete("words").
-		Where(sq.Eq{"task_id": taskId}).
+		Where(sq.Eq{"task_id": taskId, "word": word}).
 		ToSql()
 	if err != nil {
 		return fmt.Sprintf("Ошибка при попытке создать запрос \n%v", zap.Error(err))
@@ -95,7 +98,7 @@ func DeleteWord(log *zap.Logger, taskId int, word string) string {
 	return fmt.Sprintf("Успешно удалил слово: %s", word)
 }
 
-func FindWord(log *zap.Logger, taskId int, word string) string {
+func FindWord(log *zap.Logger, taskId int, word string) (string, error){
 	db, psql := utils.GetDb(log)
 	defer db.Close()
 
@@ -105,13 +108,13 @@ func FindWord(log *zap.Logger, taskId int, word string) string {
 		Where(sq.Eq{"word": word}).
 		ToSql()
 	if err != nil {
-		return fmt.Sprintf("Ошибка при попытке создать запрос \n%v", zap.Error(err))
+		return fmt.Sprintf("Ошибка при попытке создать запрос \n%v", zap.Error(err)), err
 	}
 	var neededWord, neededExplanation string
 	if errRow := db.QueryRow(query, args...).Scan(&neededWord, &neededExplanation); errRow != nil {
-		return fmt.Sprintf("Ошибка при попытке создать запрос \n%v", zap.Error(errRow))
+		return fmt.Sprintf("Ошибка при попытке создать запрос \n%v", zap.Error(errRow)), errRow
 	}
-	return fmt.Sprintf("Нужное слово: %v\nПояснение: %v", neededWord, neededExplanation)
+	return fmt.Sprintf("Нужное слово: %v\nПояснение: %v", neededWord, neededExplanation), nil
 }
 
 func ShowAllWords(log *zap.Logger, userId int64, taskId int, targetSlice *[]string, targetPage *int, filter bool, neededLetter string) string {

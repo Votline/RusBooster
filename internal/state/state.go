@@ -53,7 +53,7 @@ func GetUserState(log *zap.Logger, userId int64) (*UserState, error) {
 	data, err := rdb.Get(ctx, key).Bytes()
 	if err != nil {
 		if err == redis.Nil {
-			log.Error("Такой записи в Redis не существует", zap.Error(err))
+			log.Warn("Такой записи в Redis не существует", zap.Error(err))
 			newState := &UserState{}
 			if errState := SetUserState(log, newState, userId); errState != nil {
 				log.Error("Ошибка при создании новой записи", zap.Error(errState))
