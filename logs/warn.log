@@ -1,5 +1,6 @@
-{"level":"error","ts":1746142282.1385841,"caller":"state/state.go:44","msg":"Ошибка, Redis не был инициализирован"}
-{"level":"error","ts":1746142282.1396484,"caller":"state/state.go:55","msg":"Такой записи в Redis не существует","error":"redis: nil"}
+{"level":"error","ts":1746143789.2979515,"caller":"state/state.go:44","msg":"Ошибка, Redis не был инициализирован"}
+{"level":"error","ts":1746143681.880159,"caller":"state/state.go:55","msg":"Такой записи в Redis не существует","error":"redis: nil"}
+
 "level":"error","ts":1746142244.413943,"caller":"state/state.go:55","msg":"Такой записи в Redis не существует","error":"redis: nil"}
 
 {"level":"error","ts":1746141402.9552903,"caller":"state/state.go:56","msg":"Такой записи в Redis не существует","error":"redis: nil"}

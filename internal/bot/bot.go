@@ -104,7 +104,9 @@ func HandleText(log *zap.Logger, bot *tele.Bot, con tele.Context) error {
 			userState.IsChecking = true
 			text := core.MakeUserTask(log, userId, userState)
 			menu := keyboard.MakeTaskKeyboard()
-			return con.Send(text, menu)
+			message, err := con.Bot().Send(con.Chat(), text, menu)
+			utils.ActionAfter(log, func() error {return con.Bot().Delete(message)}, 3600, "Ошибка при попытке удалить check-сообщение")
+			return err
 		} else {
 			return con.Delete()
 		}
@@ -120,7 +122,9 @@ func HandleText(log *zap.Logger, bot *tele.Bot, con tele.Context) error {
 		text := (guide.ShowGuide(log, taskId,
 			&userState.CurrentPageOfGuide, &userState.PartsOfGuide))
 		menu := keyboard.ShowWordsMenu(userState, new(int), userState.PartsOfGuide)
-		return con.Send(text, menu)
+		message, err := con.Bot().Send(con.Chat(), text, menu)
+		utils.ActionAfter(log, func() error {return con.Bot().Delete(message)}, 3600, "Ошибка при попытке удалить guide-сообщение" )
+		return err
 	case "/start":
 		userState.IsChoosing, userState.IsChecking, userState.IsSetting = false, false, false
 		return nil
@@ -129,7 +133,9 @@ func HandleText(log *zap.Logger, bot *tele.Bot, con tele.Context) error {
 			text := admin.HandleCommands(log, userState, userId, con.Text())
 			if strings.Contains(con.Text(), "showall") {
 				_, _, _, menu := getTargets(log, text, userState)
-				return con.Send(text, menu)
+				message, err := con.Bot().Send(con.Chat(), text, menu)
+				utils.ActionAfter(log, func() error {return con.Bot().Delete(message)}, 3600, "Ошибка при попытке удалить admin-сообщение")
+				return err 
 			}
 			return con.Send(text)
 		}
@@ -224,7 +230,7 @@ func HandleCallback(log *zap.Logger, bot *tele.Bot, con tele.Context) error {
 		return con.Send(text)
 	case "ShowPreviousWords", "ShowNextWords":
 		text, targetPage, targetSlice, _ := getTargets(log, con.Message().Text, userState)
-		if len(*targetSlice) == 0{
+		if len(*targetSlice) == 0 {
 			deleteMsgAfter(log, con, utils.GetReturnText(false))
 			return nil
 		}
