@@ -9,10 +9,11 @@ import (
 	"RusBooster/internal/state"
 	"RusBooster/internal/utils"
 	"fmt"
-	"go.uber.org/zap"
-	tele "gopkg.in/telebot.v3"
 	"strconv"
 	"strings"
+
+	"go.uber.org/zap"
+	tele "gopkg.in/telebot.v3"
 )
 
 func getTargets(log *zap.Logger, message string, userState *state.UserState) (string, *int, *[]string, *tele.ReplyMarkup) {
@@ -75,11 +76,20 @@ func deleteMsgAfter(log *zap.Logger, con tele.Context, temporaryText string) {
 
 func HandleText(log *zap.Logger, bot *tele.Bot, con tele.Context) error {
 	userId := con.Sender().ID
+	log.Info("Начало обработки сообщения",
+		zap.Int64("user_id", userId),
+		zap.String("text", con.Text()))
+
 	userState, err := state.GetUserState(log, userId)
-	defer state.SetUserState(log, userState, userId)
 	if err != nil {
+		log.Error("Ошибка при получении состояния пользователя", zap.Error(err))
 		return con.Send(utils.GetReturnText(false))
 	}
+	if userState == nil {
+		log.Info("Создание нового состояния для пользователя", zap.Int64("user_id", userId))
+		userState = &state.UserState{}
+	}
+	defer state.SetUserState(log, userState, userId)
 
 	switch con.Text() {
 	case "Выбрать задание":
@@ -105,7 +115,7 @@ func HandleText(log *zap.Logger, bot *tele.Bot, con tele.Context) error {
 			text := core.MakeUserTask(log, userId, userState)
 			menu := keyboard.MakeTaskKeyboard()
 			message, err := con.Bot().Send(con.Chat(), text, menu)
-			utils.ActionAfter(log, func() error {return con.Bot().Delete(message)}, 3600, "Ошибка при попытке удалить check-сообщение")
+			utils.ActionAfter(log, func() error { return con.Bot().Delete(message) }, 3600, "Ошибка при попытке удалить check-сообщение")
 			return err
 		} else {
 			return con.Delete()
@@ -123,19 +133,20 @@ func HandleText(log *zap.Logger, bot *tele.Bot, con tele.Context) error {
 			&userState.CurrentPageOfGuide, &userState.PartsOfGuide))
 		menu := keyboard.ShowWordsMenu(userState, new(int), userState.PartsOfGuide)
 		message, err := con.Bot().Send(con.Chat(), text, menu)
-		utils.ActionAfter(log, func() error {return con.Bot().Delete(message)}, 3600, "Ошибка при попытке удалить guide-сообщение" )
+		utils.ActionAfter(log, func() error { return con.Bot().Delete(message) }, 3600, "Ошибка при попытке удалить guide-сообщение")
 		return err
 	case "/start":
+		log.Info("Обработка команды /start", zap.Int64("user_id", userId))
 		userState.IsChoosing, userState.IsChecking, userState.IsSetting = false, false, false
-		return nil
+		return con.Send("Добро пожаловать! Выберите опцию:", keyboard.MainMenu())
 	default:
 		if userId == 5459965917 && utils.ContainsRune(con.Text(), "/") {
 			text := admin.HandleCommands(log, userState, userId, con.Text())
 			if strings.Contains(con.Text(), "showall") {
 				_, _, _, menu := getTargets(log, text, userState)
 				message, err := con.Bot().Send(con.Chat(), text, menu)
-				utils.ActionAfter(log, func() error {return con.Bot().Delete(message)}, 3600, "Ошибка при попытке удалить admin-сообщение")
-				return err 
+				utils.ActionAfter(log, func() error { return con.Bot().Delete(message) }, 3600, "Ошибка при попытке удалить admin-сообщение")
+				return err
 			}
 			return con.Send(text)
 		}
