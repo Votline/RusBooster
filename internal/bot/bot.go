@@ -76,20 +76,11 @@ func deleteMsgAfter(log *zap.Logger, con tele.Context, temporaryText string) {
 
 func HandleText(log *zap.Logger, bot *tele.Bot, con tele.Context) error {
 	userId := con.Sender().ID
-	log.Info("Начало обработки сообщения",
-		zap.Int64("user_id", userId),
-		zap.String("text", con.Text()))
-
 	userState, err := state.GetUserState(log, userId)
+	defer state.SetUserState(log, userState, userId)
 	if err != nil {
-		log.Error("Ошибка при получении состояния пользователя", zap.Error(err))
 		return con.Send(utils.GetReturnText(false))
 	}
-	if userState == nil {
-		log.Info("Создание нового состояния для пользователя", zap.Int64("user_id", userId))
-		userState = &state.UserState{}
-	}
-	defer state.SetUserState(log, userState, userId)
 
 	switch con.Text() {
 	case "Выбрать задание":
@@ -136,9 +127,8 @@ func HandleText(log *zap.Logger, bot *tele.Bot, con tele.Context) error {
 		utils.ActionAfter(log, func() error { return con.Bot().Delete(message) }, 3600, "Ошибка при попытке удалить guide-сообщение")
 		return err
 	case "/start":
-		log.Info("Обработка команды /start", zap.Int64("user_id", userId))
 		userState.IsChoosing, userState.IsChecking, userState.IsSetting = false, false, false
-		return con.Send("Добро пожаловать! Выберите опцию:", keyboard.MainMenu())
+		return nil
 	default:
 		if userId == 5459965917 && utils.ContainsRune(con.Text(), "/") {
 			text := admin.HandleCommands(log, userState, userId, con.Text())

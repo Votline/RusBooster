@@ -1,9 +1,36 @@
-{"level":"fatal","ts":1747524900.845997,"caller":"RusBooster/main.go:56","msg":"Webhook_url не задан"}
-�нициализирован"}
-{"level":"error","ts":1746917754.4521394,"caller":"state/state.go:55","msg":"Такой записи в Redis не существует","error":"redis: nil"}
-"level":"error","ts":1746142244.413943,"caller":"state/state.go:55","msg":"Такой записи в Redis не существует","error":"redis: nil"}
-
-{"level":"error","ts":1746141402.9552903,"caller":"state/state.go:56","msg":"Такой записи в Redis не существует","error":"redis: nil"}
-{"level":"error","ts":1746141423.1781619,"caller":"state/state.go:56","msg":"Такой записи в Redis не существует","error":"redis: nil"}
-{"level":"error","ts":1746141426.3392053,"caller":"utils/utils.go:81","msg":"Ошибка при попытке удалить сообщение пользователя","error":"telegram: message to delete not found (400)"}
-{"level":"error","ts":1746141426.6395767,"caller":"utils/utils.go:81","msg":"Ошибка при попытке удалить сообщение пользователя","error":"telegram: message to delete not found (400)"}
+{"level":"error","ts":1747570415.5091226,"caller":"state/state.go:44","msg":"Ошибка, Redis не был инициализирован"}
+{"level":"error","ts":1747570415.5103745,"caller":"state/state.go:55","msg":"Такой записи в Redis не существует","error":"redis: nil"}
+"ts":1747525513.8596404,"caller":"state/state.go:44","msg":"Ошибка, Redis не был инициализирован"}
+{"level":"error","ts":1747525513.859689,"caller":"state/state.go:44","msg":"Ошибка, Redis не был инициализирован"}
+{"level":"error","ts":1747525513.8596091,"caller":"state/state.go:44","msg":"Ошибка, Redis не был инициализирован"}
+{"level":"error","ts":1747525513.8706007,"caller":"state/state.go:55","msg":"Такой записи в Redis не существует","error":"redis: nil"}
+{"level":"error","ts":1747525513.8706288,"caller":"state/state.go:55","msg":"Такой записи в Redis не существует","error":"redis: nil"}
+{"level":"error","ts":1747525513.870619,"caller":"state/state.go:55","msg":"Такой записи в Redis не существует","error":"redis: nil"}
+{"level":"error","ts":1747525513.870602,"caller":"state/state.go:55","msg":"Такой записи в Redis не существует","error":"redis: nil"}
+{"level":"error","ts":1747525513.8708224,"caller":"state/state.go:55","msg":"Такой записи в Redis не существует","error":"redis: nil"}
+{"level":"error","ts":1747525513.870823,"caller":"state/state.go:55","msg":"Такой записи в Redis не существует","error":"redis: nil"}
+{"level":"error","ts":1747525513.8708403,"caller":"state/state.go:55","msg":"Такой записи в Redis не существует","error":"redis: nil"}
+{"level":"error","ts":1747525513.8708725,"caller":"state/state.go:55","msg":"Такой записи в Redis не существует","error":"redis: nil"}
+{"level":"error","ts":1747525513.870901,"caller":"state/state.go:55","msg":"Такой записи в Redis не существует","error":"redis: nil"}
+{"level":"error","ts":1747525513.8708797,"caller":"state/state.go:55","msg":"Такой записи в Redis не существует","error":"redis: nil"}
+{"level":"error","ts":1747525513.8708615,"caller":"state/state.go:55","msg":"Такой записи в Redis не существует","error":"redis: nil"}
+{"level":"error","ts":1747525513.8715973,"caller":"state/state.go:55","msg":"Такой записи в Redis не существует","error":"redis: nil"}
+{"level":"error","ts":1747525513.870907,"caller":"state/state.go:55","msg":"Такой записи в Redis не существует","error":"redis: nil"}
+{"level":"error","ts":1747525513.8719585,"caller":"state/state.go:55","msg":"Такой записи в Redis не существует","error":"redis: nil"}
+{"level":"error","ts":1747525513.8719852,"caller":"state/state.go:55","msg":"Такой записи в Redis не существует","error":"redis: nil"}
+{"level":"error","ts":1747525513.8708546,"caller":"state/state.go:55","msg":"Такой записи в Redis не существует","error":"redis: nil"}
+{"level":"error","ts":1747525513.8719692,"caller":"state/state.go:55","msg":"Такой записи в Redis не существует","error":"redis: nil"}
+{"level":"error","ts":1747525513.8718512,"caller":"state/state.go:55","msg":"Такой записи в Redis не существует","error":"redis: nil"}
+{"level":"error","ts":1747525513.8714688,"caller":"state/state.go:55","msg":"Такой записи в Redis не существует","error":"redis: nil"}
+{"level":"error","ts":1747525513.8743966,"caller":"state/state.go:55","msg":"Такой записи в Redis не существует","error":"redis: nil"}
+{"level":"error","ts":1747525513.8744748,"caller":"state/state.go:55","msg":"Такой записи в Redis не существует","error":"redis: nil"}
+{"level":"error","ts":1747525513.874509,"caller":"state/state.go:55","msg":"Такой записи в Redis не существует","error":"redis: nil"}
+{"level":"error","ts":1747525513.874563,"caller":"state/state.go:55","msg":"Такой записи в Redis не существует","error":"redis: nil"}
+{"level":"error","ts":1747525513.8708198,"caller":"state/state.go:55","msg":"Такой записи в Redis не существует","error":"redis: nil"}
+{"level":"error","ts":1747525513.874637,"caller":"state/state.go:55","msg":"Такой записи в Redis не существует","error":"redis: nil"}
+{"level":"error","ts":1747525513.8708346,"caller":"state/state.go:55","msg":"Такой записи в Redis не существует","error":"redis: nil"}
+{"level":"error","ts":1747525513.874707,"caller":"state/state.go:55","msg":"Такой записи в Redis не существует","error":"redis: nil"}
+{"level":"error","ts":1747525513.8750763,"caller":"state/state.go:55","msg":"Такой записи в Redis не существует","error":"redis: nil"}
+{"level":"error","ts":1747525513.8752317,"caller":"state/state.go:55","msg":"Такой записи в Redis не существует","error":"redis: nil"}
+{"level":"error","ts":1747525513.8722265,"caller":"state/state.go:55","msg":"Такой записи в Redis не существует","error":"redis: nil"}
+{"level":"error","ts":1747525513.8722396,"caller":"state/state.go:55","msg":"Такой записи в Redis не существует","error":"redis: nil"}

@@ -4,10 +4,12 @@ import (
 	"RusBooster/internal/bot"
 	"RusBooster/internal/notify"
 	"bufio"
+	"os"
+	"time"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	tele "gopkg.in/telebot.v3"
-	"os"
 )
 
 func getToken() string {
@@ -51,25 +53,21 @@ func main() {
 	log := createLogger()
 	defer log.Sync()
 
-	webhookURL := os.Getenv("WEBHOOK_URL")
-	if webhookURL == "" {
-		log.Fatal("Webhook_url не задан")
-	}
-
 	b, err := tele.NewBot(tele.Settings{
 		Token: token,
-		Poller: &tele.Webhook{
-			Listen:   "0.0.0.0:8080",
-			Endpoint: &tele.WebhookEndpoint{PublicURL: webhookURL},
+		Poller: &tele.LongPoller{
+			Timeout:        10 * time.Second,
 		},
 	})
 	if err != nil {
-		log.Fatal("Не удалось подключиться к cloudflare", zap.Error(err))
+		log.Fatal("Не удалось запустить бота", zap.Error(err))
 	}
-	log.Info("Бот запущен на вебхуках!")
+	log.Info("Бот запущен!")
+
 	b.Handle(tele.OnText, func(con tele.Context) error {
 		return bot.HandleText(log, b, con)
 	})
+
 	b.Handle(tele.OnCallback, func(con tele.Context) error {
 		return bot.HandleCallback(log, b, con)
 	})
