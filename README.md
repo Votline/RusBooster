@@ -33,10 +33,8 @@ RusBooster уже доступен в Telegram! Чтобы начать:
   - `git clone https://github.com/yourusername/RusBooster.git`
 2. Установить зависимости:
   - `go mod download`
-3. Создать URL и скопировать его:
-  - `lt --port 8080`
-4. Запустить бота с URL:
-  - `WEBHOOK_URL="URL" go run main.go`
+3. Запустить бота:
+  - `go run main.go`
 
 ## Лицензия
 Проект распространяется под лицензией [GNU AGPL v3](LICENSE).
