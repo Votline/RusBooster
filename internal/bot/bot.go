@@ -49,9 +49,13 @@ func deleteOriginalBotMsg(log *zap.Logger, con tele.Context) {
 	originalBotMsg := &tele.StoredMessage{
 		ChatID:    con.Chat().ID,
 		MessageID: strconv.Itoa(con.Message().ID - 1)}
-	utils.ActionAfter(log, func() error { return con.Bot().Delete(originalBotMsg) }, 3,
+	utils.ActionAfter(log, func() error {
+		if originalBotMsg.MessageID == "" {
+			return nil
+		}
+		return con.Bot().Delete(originalBotMsg)
+	}, 3,
 		"Ошибка при попытке удалить первоначальное сообщение бота")
-
 }
 
 func deleteMsgAfter(log *zap.Logger, con tele.Context, temporaryText string) {
@@ -66,10 +70,20 @@ func deleteMsgAfter(log *zap.Logger, con tele.Context, temporaryText string) {
 		deleteMessage.MessageID = strconv.Itoa(errMessage.ID)
 		anotherMessage.MessageID = strconv.Itoa(errMessage.ID - 1)
 	}
-	utils.ActionAfter(log, func() error { return con.Bot().Delete(deleteMessage) }, 3,
+	utils.ActionAfter(log, func() error {
+		if deleteMessage.MessageID == "" {
+			return nil
+		}
+		return con.Bot().Delete(deleteMessage)
+	}, 3,
 		"Ошибка при попытке удалить ответное сообщение бота")
 	if anotherMessage.MessageID != "" {
-		utils.ActionAfter(log, func() error { return con.Bot().Delete(anotherMessage) }, 3,
+		utils.ActionAfter(log, func() error {
+			if anotherMessage.MessageID == "" {
+				return nil
+			}
+			return con.Bot().Delete(anotherMessage)
+		}, 3,
 			"Ошибка при попытке удалить сообщение пользователя")
 	}
 }
@@ -106,7 +120,12 @@ func HandleText(log *zap.Logger, bot *tele.Bot, con tele.Context) error {
 			text := core.MakeUserTask(log, userId, userState)
 			menu := keyboard.MakeTaskKeyboard()
 			message, err := con.Bot().Send(con.Chat(), text, menu)
-			utils.ActionAfter(log, func() error { return con.Bot().Delete(message) }, 3600, "Ошибка при попытке удалить check-сообщение")
+			utils.ActionAfter(log, func() error {
+				if message == nil {
+					return nil
+				}
+				return con.Bot().Delete(message)
+			}, 3600, "Ошибка при попытке удалить check-сообщение")
 			return err
 		} else {
 			return con.Delete()
@@ -124,7 +143,12 @@ func HandleText(log *zap.Logger, bot *tele.Bot, con tele.Context) error {
 			&userState.CurrentPageOfGuide, &userState.PartsOfGuide))
 		menu := keyboard.ShowWordsMenu(userState, new(int), userState.PartsOfGuide)
 		message, err := con.Bot().Send(con.Chat(), text, menu)
-		utils.ActionAfter(log, func() error { return con.Bot().Delete(message) }, 3600, "Ошибка при попытке удалить guide-сообщение")
+		utils.ActionAfter(log, func() error {
+			if message == nil {
+				return nil
+			}
+			return con.Bot().Delete(message)
+		}, 3600, "Ошибка при попытке удалить guide-сообщение")
 		return err
 	case "/start":
 		userState.IsChoosing, userState.IsChecking, userState.IsSetting = false, false, false
@@ -135,7 +159,12 @@ func HandleText(log *zap.Logger, bot *tele.Bot, con tele.Context) error {
 			if strings.Contains(con.Text(), "showall") {
 				_, _, _, menu := getTargets(log, text, userState)
 				message, err := con.Bot().Send(con.Chat(), text, menu)
-				utils.ActionAfter(log, func() error { return con.Bot().Delete(message) }, 3600, "Ошибка при попытке удалить admin-сообщение")
+				utils.ActionAfter(log, func() error {
+					if message == nil {
+						return nil
+					}
+					return con.Bot().Delete(message)
+				}, 3600, "Ошибка при попытке удалить admin-сообщение")
 				return err
 			}
 			return con.Send(text)
@@ -214,7 +243,12 @@ func HandleCallback(log *zap.Logger, bot *tele.Bot, con tele.Context) error {
 		message := tele.StoredMessage{ChatID: con.Chat().ID, MessageID: userMsgID}
 
 		deleteMsgAfter(log, con, "")
-		utils.ActionAfter(log, func() error { return con.Bot().Delete(message) }, 3,
+		utils.ActionAfter(log, func() error {
+			if message.MessageID == "" {
+				return nil
+			}
+			return con.Bot().Delete(message)
+		}, 3,
 			"Ошибка при попытке удалить сообщение бота")
 
 		return con.Send("Выберите опцию:", keyboard.MainMenu())
