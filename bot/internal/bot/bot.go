@@ -1,22 +1,23 @@
 package bot
 
 import (
-	"RusBooster/internal/admin"
+	"fmt"
+	"log"
+	"strings"
+	"strconv"
+
+	tele "gopkg.in/telebot.v3"
+
 	"RusBooster/internal/core"
-	"RusBooster/internal/guide"
-	"RusBooster/internal/keyboard"
 	"RusBooster/internal/stat"
 	"RusBooster/internal/state"
 	"RusBooster/internal/utils"
-	"fmt"
-	"strconv"
-	"strings"
-
-	"go.uber.org/zap"
-	tele "gopkg.in/telebot.v3"
+	"RusBooster/internal/guide"
+	"RusBooster/internal/admin"
+	"RusBooster/internal/keyboard"
 )
 
-func getTargets(log *zap.Logger, message string, userState *state.UserState) (string, *int, *[]string, *tele.ReplyMarkup) {
+func getTargets(message string, userState *state.UserState) (string, *int, *[]string, *tele.ReplyMarkup) {
 	if strings.HasPrefix(message, "Найденные слова: \n") {
 		menu := keyboard.ShowWordsMenu(userState,
 			&userState.CurrentPageOfFindWords, userState.PartsOfFindWords)
@@ -33,23 +34,23 @@ func getTargets(log *zap.Logger, message string, userState *state.UserState) (st
 	return "", &userState.CurrentPageOfGuide, &userState.PartsOfGuide, menu
 }
 
-func setUserField(log *zap.Logger, userId int64, message string, column string) (int, error) {
+func setUserField(userId int64, message string, column string) (int, error) {
 	userNumber, errUtils := utils.ToInt(message)
 	if errUtils != nil {
 		return -1, errUtils
 	}
-	if err := stat.SetSomething(log, userId, userNumber, column); err != nil {
-		log.Error("Ошибка при попытке установить значение пользователя", zap.Error(err))
+	if err := stat.SetSomething(userId, userNumber, column); err != nil {
+		log.Printf("Ошибка при попытке установить значение пользователя: %v", err)
 		return -1, err
 	}
 	return userNumber, nil
 }
 
-func deleteOriginalBotMsg(log *zap.Logger, con tele.Context) {
+func deleteOriginalBotMsg(con tele.Context) {
 	originalBotMsg := &tele.StoredMessage{
 		ChatID:    con.Chat().ID,
 		MessageID: strconv.Itoa(con.Message().ID - 1)}
-	utils.ActionAfter(log, func() error {
+	utils.ActionAfter(func() error {
 		if originalBotMsg.MessageID == "" {
 			return nil
 		}
@@ -58,7 +59,7 @@ func deleteOriginalBotMsg(log *zap.Logger, con tele.Context) {
 		"Ошибка при попытке удалить первоначальное сообщение бота")
 }
 
-func deleteMsgAfter(log *zap.Logger, con tele.Context, temporaryText string) {
+func deleteMsgAfter(con tele.Context, temporaryText string) {
 	errMessage, _ := con.Bot().Send(con.Chat(), temporaryText)
 	deleteMessage := tele.StoredMessage{
 		ChatID:    con.Chat().ID,
@@ -70,7 +71,7 @@ func deleteMsgAfter(log *zap.Logger, con tele.Context, temporaryText string) {
 		deleteMessage.MessageID = strconv.Itoa(errMessage.ID)
 		anotherMessage.MessageID = strconv.Itoa(errMessage.ID - 1)
 	}
-	utils.ActionAfter(log, func() error {
+	utils.ActionAfter(func() error {
 		if deleteMessage.MessageID == "" {
 			return nil
 		}
@@ -78,7 +79,7 @@ func deleteMsgAfter(log *zap.Logger, con tele.Context, temporaryText string) {
 	}, 3,
 		"Ошибка при попытке удалить ответное сообщение бота")
 	if anotherMessage.MessageID != "" {
-		utils.ActionAfter(log, func() error {
+		utils.ActionAfter(func() error {
 			if anotherMessage.MessageID == "" {
 				return nil
 			}
@@ -88,10 +89,10 @@ func deleteMsgAfter(log *zap.Logger, con tele.Context, temporaryText string) {
 	}
 }
 
-func HandleText(log *zap.Logger, bot *tele.Bot, con tele.Context) error {
+func HandleText(bot *tele.Bot, con tele.Context) error {
 	userId := con.Sender().ID
-	userState, err := state.GetUserState(log, userId)
-	defer state.SetUserState(log, userState, userId)
+	userState, err := state.GetUserState(userId)
+	defer state.SetUserState(userState, userId)
 	if err != nil {
 		return con.Send(utils.GetReturnText(false))
 	}
@@ -100,173 +101,178 @@ func HandleText(log *zap.Logger, bot *tele.Bot, con tele.Context) error {
 	case "Выбрать задание":
 		if !userState.IsChecking && !userState.IsSetting {
 			userState.IsChoosing = true
-			return con.Send("Напишите номер упражнения от 1 до 26: ", keyboard.SelectMenu(log, userId))
+			return con.Send("Напишите номер упражнения от 1 до 26: ", keyboard.SelectMenu(userId))
 		} else {
 			return con.Delete()
 		}
 	case "Проверить знания":
 		if !userState.IsSetting && !userState.IsChoosing {
 			if userState.IsChecking == true {
-				utils.ActionAfter(log,
+				utils.ActionAfter(
 					func() error {
 						return con.Bot().Delete(&tele.StoredMessage{
 							ChatID:    con.Chat().ID,
-							MessageID: strconv.Itoa(con.Message().ID - 2),
+							MessageID: strconv.Itoa(con.Message().ID),
 						})
 					}, 3, "Ошибка при попытке удалить сообщение пользователя case Проверить Знания")
-				deleteOriginalBotMsg(log, con)
+				deleteOriginalBotMsg(con)
 			}
 			userState.IsChecking = true
-			text := core.MakeUserTask(log, userId, userState)
+			text := core.MakeUserTask(userId, userState)
 			menu := keyboard.MakeTaskKeyboard()
-			message, err := con.Bot().Send(con.Chat(), text, menu)
-			utils.ActionAfter(log, func() error {
+			message, _ := con.Bot().Send(con.Chat(), text, menu)
+			utils.ActionAfter(func() error {
 				if message == nil {
 					return nil
 				}
-				return con.Bot().Delete(message)
-			}, 3600, "Ошибка при попытке удалить check-сообщение")
-			return err
+				return con.Bot().Delete(&tele.StoredMessage{
+					ChatID:    con.Chat().ID,
+					MessageID: strconv.Itoa(message.ID),
+				})
+			}, 30, "Ошибка при попытке удалить сообщение с заданием")
+			return nil
 		} else {
 			return con.Delete()
 		}
 	case "Статистика":
 		if !userState.IsSetting && !userState.IsChoosing && !userState.IsChecking {
-			text, menu := keyboard.StatisticMenu(log, con)
+			text, menu := keyboard.StatisticMenu(con)
 			return con.Send(text, menu)
 		} else {
 			return con.Delete()
 		}
 	case "Гайд к заданию":
-		taskId, _ := stat.GetSomething(log, userId, "current_task")
-		text := (guide.ShowGuide(log, taskId,
+		taskId, _ := stat.GetSomething(userId, "current_task")
+		text := (guide.ShowGuide(taskId,
 			&userState.CurrentPageOfGuide, &userState.PartsOfGuide))
 		menu := keyboard.ShowWordsMenu(userState, new(int), userState.PartsOfGuide)
-		message, err := con.Bot().Send(con.Chat(), text, menu)
-		utils.ActionAfter(log, func() error {
+		message, _ := con.Bot().Send(con.Chat(), text, menu)
+		utils.ActionAfter(func() error {
 			if message == nil {
 				return nil
 			}
-			return con.Bot().Delete(message)
-		}, 3600, "Ошибка при попытке удалить guide-сообщение")
-		return err
-	case "/start":
-		userState.IsChoosing, userState.IsChecking, userState.IsSetting = false, false, false
+			return con.Bot().Delete(&tele.StoredMessage{
+				ChatID:    con.Chat().ID,
+				MessageID: strconv.Itoa(message.ID),
+			})
+		}, 30, "Ошибка при попытке удалить сообщение с гайдом")
 		return nil
 	default:
 		if userId == 5459965917 && utils.ContainsRune(con.Text(), "/") {
-			text := admin.HandleCommands(log, userState, userId, con.Text())
+			text := admin.HandleCommands(userState, userId, con.Text())
 			if strings.Contains(con.Text(), "showall") {
-				_, _, _, menu := getTargets(log, text, userState)
-				message, err := con.Bot().Send(con.Chat(), text, menu)
-				utils.ActionAfter(log, func() error {
+				_, _, _, menu := getTargets(text, userState)
+				message, _ := con.Bot().Send(con.Chat(), text, menu)
+				utils.ActionAfter(func() error {
 					if message == nil {
 						return nil
 					}
-					return con.Bot().Delete(message)
-				}, 3600, "Ошибка при попытке удалить admin-сообщение")
-				return err
+					return con.Bot().Delete(&tele.StoredMessage{
+						ChatID:    con.Chat().ID,
+						MessageID: strconv.Itoa(message.ID),
+					})
+				}, 30, "Ошибка при попытке удалить сообщение с админской командой")
+				return nil
 			}
 			return con.Send(text)
-		}
-		if userState.IsChecking {
+		} else if userState.IsChecking {
 			userValue, errUtils := utils.ToInt(con.Text())
 			if errUtils != nil {
-				log.Error("Ошибка при попытке преобразовать сообщение пользователя в integer")
-				deleteMsgAfter(log, con, utils.GetReturnText(false))
+				log.Printf("Ошибка при попытке преобразовать сообщение пользователя в integer: %v", errUtils)
+				deleteMsgAfter(con, utils.GetReturnText(false))
 				return nil
 			}
 			userState.IsChecking = false
-			text := core.SendAnswer(log, userId, userValue, userState)
+			text := core.SendAnswer(userId, userValue, userState)
 			menu := keyboard.MakeAnswerKeyboard()
 			return con.Send(text, menu)
 		} else if userState.IsSetting {
-			userValue, err := setUserField(log, userId, con.Text(), "time_zone")
+			userValue, err := setUserField(userId, con.Text(), "time_zone")
 			if err != nil {
-				deleteMsgAfter(log, con, utils.GetReturnText(false))
+				deleteMsgAfter(con, utils.GetReturnText(false))
 				return nil
 			}
 			if !(userValue > -16 && userValue < 16) {
-				deleteMsgAfter(log, con, "Введите значение от -15 до 15")
+				deleteMsgAfter(con, "Введите значение от -15 до 15")
 				return nil
 			}
 			userState.IsSetting = false
-
 			timeZoneForm := utils.GetTimeZoneForm(userValue)
 			msg := fmt.Sprintf("Успешно! Ваш часовой пояс изменён на %s", timeZoneForm)
-			deleteMsgAfter(log, con, msg)
+			deleteMsgAfter(con, msg)
 		} else if userState.IsChoosing {
-			userValue, err := setUserField(log, userId, con.Text(), "current_task")
+			userValue, err := setUserField(userId, con.Text(), "current_task")
 			if err != nil {
-				log.Error("Ошибка при попытке внести значение пользователя в current_task")
+				log.Printf("Ошибка при попытке внести значение пользователя в current_task: %v", err)
 				msg := utils.GetReturnText(false)
-				deleteMsgAfter(log, con, msg)
+				deleteMsgAfter(con, msg)
 				return nil
 			}
 			if !(userValue > 0 && userValue < 27) {
-				deleteMsgAfter(log, con, "Введите значение от 1 до 26")
+				deleteMsgAfter(con, "Введите значение от 1 до 26")
 				return nil
 			}
 			userState.IsChoosing = false
 
-			deleteOriginalBotMsg(log, con)
+			deleteOriginalBotMsg(con)
 			msg := "Успешно! Текущее задание: №" + con.Text()
-			deleteMsgAfter(log, con, msg)
+			deleteMsgAfter(con, msg)
 		}
 		return con.Send("Выберите опцию: ", keyboard.MainMenu())
 	}
 }
 
-func HandleCallback(log *zap.Logger, bot *tele.Bot, con tele.Context) error {
+func HandleCallback(bot *tele.Bot, con tele.Context) error {
 	userId := con.Sender().ID
 	data := strings.TrimPrefix(con.Callback().Data, "\f")
-	userState, err := state.GetUserState(log, userId)
+	userState, err := state.GetUserState(userId)
 	defer func() {
 		con.Respond()
-		if err := state.SetUserState(log, userState, userId); err != nil {
-			log.Error("Ошибка сохранения данных в Redis", zap.Error(err))
+		if err := state.SetUserState(userState, userId); err != nil {
+			log.Printf("Ошибка сохранения данных в Redis: %v", err)
 		}
 	}()
 
 	if err != nil {
-		log.Error("Ошибка при попытке получить userState")
+		log.Printf("Ошибка при попытке получить userState: %v", err)
 		return con.Send(utils.GetReturnText(false))
-	}
-	if userState == nil {
-		userState = &state.UserState{}
 	}
 
 	switch data {
 	case "ToMain":
-		userState.IsChoosing, userState.IsChecking, userState.IsSetting = false, false, false
-		userMsgID := strconv.Itoa(int(con.Message().ID - 1))
+		userState.IsChecking = false
+		userState.IsSetting = false
+		userState.IsChoosing = false
+		return con.Send("Выберите опцию: ", keyboard.MainMenu())
+	case "Cancel":
+		userState.IsChecking = false
+		userState.IsSetting = false
+		userState.IsChoosing = false
+		return con.Send("Выберите опцию: ", keyboard.MainMenu())
+	case "Back":
+		return con.Send("Выберите опцию: ", keyboard.MainMenu())
+	case "SpecifyTimeZone":
+		userMsgID := strconv.Itoa(con.Message().ID)
 		message := tele.StoredMessage{ChatID: con.Chat().ID, MessageID: userMsgID}
 
-		deleteMsgAfter(log, con, "")
-		utils.ActionAfter(log, func() error {
+		deleteMsgAfter(con, "")
+		utils.ActionAfter(func() error {
 			if message.MessageID == "" {
 				return nil
 			}
 			return con.Bot().Delete(message)
-		}, 3,
-			"Ошибка при попытке удалить сообщение бота")
-
-		return con.Send("Выберите опцию:", keyboard.MainMenu())
-	case "SpecifyTimeZone":
-		if userState.IsChoosing || userState.IsChecking || userState.IsSetting {
-			return nil
-		}
+		}, 3, "Ошибка при попытке удалить сообщение пользователя case SpecifyTimeZone")
 		userState.IsSetting = true
-		text, menu := keyboard.TimeZoneMenu(log, con)
+		text, menu := keyboard.TimeZoneMenu(con)
 
 		return con.Edit(text, menu)
 	case "ShowAllExplanations":
-		text := strings.ReplaceAll(strings.ReplaceAll(userState.Explanations, "@", ""), "$", "")
+		text := userState.Explanations
 		return con.Send(text)
 	case "ShowPreviousWords", "ShowNextWords":
-		text, targetPage, targetSlice, _ := getTargets(log, con.Message().Text, userState)
+		text, targetPage, targetSlice, _ := getTargets(con.Message().Text, userState)
 		if len(*targetSlice) == 0 {
-			deleteMsgAfter(log, con, utils.GetReturnText(false))
+			deleteMsgAfter(con, utils.GetReturnText(false))
 			return nil
 		}
 		if data == "ShowPreviousWords" {
@@ -274,12 +280,11 @@ func HandleCallback(log *zap.Logger, bot *tele.Bot, con tele.Context) error {
 		} else {
 			text += admin.ShowNextWords(targetPage, targetSlice)
 		}
-		_, _, _, menu := getTargets(log, con.Message().Text, userState)
+		_, _, _, menu := getTargets(con.Message().Text, userState)
 		return con.Edit(text, menu)
 	case "Ignore":
 		return nil
 	default:
-		userState.IsChoosing, userState.IsChecking, userState.IsSetting = false, false, false
-		return con.Send("Выберите опцию", keyboard.MainMenu())
+		return con.Send("Неизвестная команда")
 	}
 }
