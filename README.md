@@ -28,15 +28,6 @@ RusBooster уже доступен в Telegram! Чтобы начать:
 - **[Squirrel](https://github.com/Masterminds/squirrel)** - построение SQL-запросов
 - **[Telebot](https://gopkg.in/telebot.v3)** - библиотека для работы с Telegram API
 
-
-## Установка и запуск
-1. Клонировать репозиторий:
-  - `git clone https://github.com/yourusername/RusBooster.git`
-2. Установить зависимости:
-  - `go mod download`
-3. Запустить бота:
-  - `go run main.go`
-
 ## Лицензия
 Проект распространяется под лицензией [GNU AGPL v3](LICENSE).
 
@@ -44,11 +35,11 @@ RusBooster уже доступен в Telegram! Чтобы начать:
 
 # RusBooster
 
-RusBooster is a Telegram bot for preparing for the Russian Unified State Exam (ЕГЭ), rewritten in Go. Inspired by Duolingo but specifically tailored for the test portion of the ЕГЭ.
+RusBooster is a Telegram bot for preparing for the Russian Unified State Exam (USE), rewritten in Go. Inspired by Duolingo but specifically tailored for the test portion of the USE.
 
 ## Description
 
-The bot provides Russian language practice exercises in ЕГЭ format, using a database of words and explanations.
+The bot provides Russian language practice exercises in USE format, using a database of words and explanations.
 
 ## Getting Started:
 RusBooster is already available on Telegram! To begin:
@@ -71,16 +62,6 @@ RusBooster is already available on Telegram! To begin:
 - **[GO-Redis](https://github.com/redis/go-redis)** - caching
 - **[Squirrel](https://github.com/Masterminds/squirrel)** - SQL query builder
 - **[Telebot](https://gopkg.in/telebot.v3)** - Telegram API library
-
-## Installation and Setup
-1. Clone the repository:
-  - `git clone https://github.com/yourusername/RusBooster.git`
-2. Install dependencies:
-  - `go mod download`
-3. Create and copy URL:
-  - `lt --port 8080`
-4. Run the bot with URL:
-  - `WEBHOOK_URL="URL" go run main.go`
 
 ## License
 This project is licensed under [GNU AGPL v3](LICENSE).
