@@ -1,12 +1,14 @@
 package keyboard
 
 import (
+	"fmt"
+	"log"
+
+	tele "gopkg.in/telebot.v3"
+
 	"RusBooster/internal/stat"
 	"RusBooster/internal/state"
 	"RusBooster/internal/utils"
-	"fmt"
-	"go.uber.org/zap"
-	tele "gopkg.in/telebot.v3"
 )
 
 func ShowWordsMenu(userState *state.UserState, currentPage *int, currentSlice []string) *tele.ReplyMarkup {
@@ -40,52 +42,42 @@ func MakeTaskKeyboard() *tele.ReplyMarkup {
 	return selector
 }
 
-func TimeZoneMenu(log *zap.Logger, con tele.Context) (string, *tele.ReplyMarkup) {
+func TimeZoneMenu(con tele.Context) (string, *tele.ReplyMarkup) {
 	userId := con.Sender().ID
-	timeZone, err := stat.GetSomething(log, userId, "time_zone")
+	timeZone, err := stat.GetSomething(userId, "time_zone")
 	if err != nil {
-		log.Error("Ошибка при получении часового пояса", zap.Error(err))
-		return utils.GetReturnText(false), nil
+		log.Printf("Ошибка при получении часового пояса: %v", err)
+		timeZone = 0
 	}
 	timeZoneForm := utils.GetTimeZoneForm(timeZone)
-	msg := fmt.Sprintf("Текущий часовой пояс: %s\nНапишите свою разницу во времени от МСК:", timeZoneForm)
+	text := fmt.Sprintf("Текущий часовой пояс: %s\nВведите новое значение от -15 до 15:", timeZoneForm)
 	selector := &tele.ReplyMarkup{}
-
-	btnToMain := selector.Data("В главное меню", "ToMain")
-
-	selector.Inline(selector.Row(btnToMain))
-	return msg, selector
+	btnCancel := selector.Data("Отмена", "Cancel")
+	selector.Inline(selector.Row(btnCancel))
+	return text, selector
 }
 
-func StatisticMenu(log *zap.Logger, con tele.Context) (string, *tele.ReplyMarkup) {
-	msg := stat.GetStatistic(log, con.Sender().FirstName, con.Sender().ID)
-	selector := &tele.ReplyMarkup{}
-
-	btnSpecifyTimeZone := selector.Data("Указать часовой пояс", "SpecifyTimeZone")
-	btnToMain := selector.Data("Вернуться в главное меню", "ToMain")
-
-	selector.Inline(
-		selector.Row(btnSpecifyTimeZone),
-		selector.Row(btnToMain),
-	)
-	return msg, selector
-}
-
-func SelectMenu(log *zap.Logger, userId int64) *tele.ReplyMarkup {
-	selector := &tele.ReplyMarkup{}
-
-	worstTaskScore, err := stat.GetSomething(log, userId, "worst_task_result")
-	if err != nil {
-		log.Error("Ошибка при получении данных из rsdb", zap.Error(err))
-		return nil
+func StatisticMenu(con tele.Context) (string, *tele.ReplyMarkup) {
+	userId := con.Sender().ID
+	userName := con.Sender().Username
+	if userName == "" {
+		userName = con.Sender().FirstName
 	}
-	btnWorstTask := selector.Data(fmt.Sprintf("Наихудшая успеваимость: №%d", worstTaskScore), "Ignore")
-	btnToMain := selector.Data("Вернуться в главное меню", "ToMain")
+	text := stat.GetStatistic(userName, userId)
+	selector := &tele.ReplyMarkup{}
+	btnBack := selector.Data("Назад", "Back")
+	selector.Inline(selector.Row(btnBack))
+	return text, selector
+}
 
-	selector.Inline(
-		selector.Row(btnWorstTask),
-		selector.Row(btnToMain),
-	)
+func SelectMenu(userId int64) *tele.ReplyMarkup {
+	_, err := stat.GetSomething(userId, "current_task")
+	if err != nil {
+		log.Printf("Ошибка при получении данных из rsdb: %v", err)
+	}
+	selector := &tele.ReplyMarkup{}
+	btnCancel := selector.Data("Отмена", "Cancel")
+	selector.Inline(selector.Row(btnCancel))
 	return selector
 }
 

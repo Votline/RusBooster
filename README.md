@@ -22,11 +22,12 @@ RusBooster уже доступен в Telegram! Чтобы начать:
 
 ## Технологии
 - **Go** (1.24.1) - основной язык
-- **Telebot** - библиотека для работы с Telegram API
-- **SQLx** - работа с базой данных
-- **Redis** - кэширование
-- **Zap** - логирование
-- **Squirrel** - построение SQL-запросов
+- **[PQ](https://github.com/lib/pq)** - драйвер для работы с PostgreSQL
+- **[SQLX](https://github.com/jmoiron/sqlx)** - работа с базой данных 
+- **[GO-Redis](https://github.com/redis/go-redis)** - кэширование
+- **[Squirrel](https://github.com/Masterminds/squirrel)** - построение SQL-запросов
+- **[Telebot](https://gopkg.in/telebot.v3)** - библиотека для работы с Telegram API
+
 
 ## Установка и запуск
 1. Клонировать репозиторий:
@@ -39,7 +40,7 @@ RusBooster уже доступен в Telegram! Чтобы начать:
 ## Лицензия
 Проект распространяется под лицензией [GNU AGPL v3](LICENSE).
 
-
+Полные тексты лицензий доступны в [директории licenses](licenses/)
 
 # RusBooster
 
@@ -65,11 +66,11 @@ RusBooster is already available on Telegram! To begin:
 
 ## Technologies
 - **Go** (1.24.1) - primary language
-- **Telebot** - Telegram API library
-- **SQLx** - database operations
-- **Redis** - caching
-- **Zap** - logging
-- **Squirrel** - SQL query builder
+- **[PQ](https://github.com/lib/pq )** - a driver for working with PostgreSQL
+- **[SQLX](https://github.com/jmoiron/sqlx)** - database operations 
+- **[GO-Redis](https://github.com/redis/go-redis)** - caching
+- **[Squirrel](https://github.com/Masterminds/squirrel)** - SQL query builder
+- **[Telebot](https://gopkg.in/telebot.v3)** - Telegram API library
 
 ## Installation and Setup
 1. Clone the repository:
@@ -83,3 +84,6 @@ RusBooster is already available on Telegram! To begin:
 
 ## License
 This project is licensed under [GNU AGPL v3](LICENSE).
+
+The full license texts are available in the [licenses directory](licenses/)
+

@@ -1,16 +1,18 @@
 package utils
 
 import (
+	"os"
 	"fmt"
-	sq "github.com/Masterminds/squirrel"
-	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq"
-	"go.uber.org/zap"
-	"math/rand"
+	"log"
 	"sort"
-	"strconv"
 	"time"
+	"strconv"
 	"unicode"
+	"math/rand"
+
+	_ "github.com/lib/pq"
+	"github.com/jmoiron/sqlx"
+	sq "github.com/Masterminds/squirrel"
 )
 
 func ContainsRune(text string, item string) bool {
@@ -74,27 +76,34 @@ func SumDigits(number int) int {
 	return sum
 }
 
-func ActionAfter(log *zap.Logger, action func() error, delay int, errMessage string) {
+func ActionAfter(action func() error, delay int, errMessage string) {
 	go func() {
 		time.Sleep(time.Duration(delay) * time.Second)
 		if err := action(); err != nil {
-			log.Error(errMessage, zap.Error(err))
+			log.Printf("%s: %v", errMessage, err)
 		}
 	}()
 }
 
-func HandleError(log *zap.Logger, action func() error, errMsg string) string {
+func HandleError(action func() error, errMsg string) string {
 	if err := action(); err != nil {
-		log.Error(errMsg, zap.Error(err))
+		log.Printf("%s: %v", errMsg, err)
 		return GetReturnText(false)
 	}
 	return ""
 }
 
-func GetDb(log *zap.Logger) (*sqlx.DB, sq.StatementBuilderType) {
-	db, err := sqlx.Connect("postgres", "host=localhost port=5432 user=postgres dbname=rsdb sslmode=disable")
+func GetDb() (*sqlx.DB, sq.StatementBuilderType) {
+	dbUser := os.Getenv("POSTGRES_USER")
+	dbName := os.Getenv("POSTGRES_DB")
+	dbPort := os.Getenv("POSTGRES_PORT")
+	dbPass := os.Getenv("POSTGRES_PASSWORD")
+
+	dsn := "host=postgres port=" + dbPort + " user=" + dbUser + " dbname=" + dbName + " password=" + dbPass + " sslmode=disable"
+
+	db, err := sqlx.Connect("postgres", dsn)
 	if err != nil {
-		log.Fatal("Ошибка подключения к базе данных rsdb\n", zap.Error(err))
+		log.Fatalf("Ошибка подключения к базе данных rsdb: %v", err)
 	}
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 	return db, psql
@@ -131,50 +140,25 @@ func GetReturnText(newUser bool) string {
 	}
 }
 
-func ToInt(val interface{}) (int, error) {
-	switch value := val.(type) {
+func ToInt(value interface{}) (int, error) {
+	switch v := value.(type) {
 	case int:
-		return value, nil
+		return v, nil
 	case int64:
-		return int(value), nil
+		return int(v), nil
 	case float64:
-		return int(value), nil
-	case []uint8:
-		if value, err := strconv.Atoi(string(value)); err != nil {
-			return 0, err
-		} else {
-			return value, nil
-		}
+		return int(v), nil
 	case string:
-		if value, err := strconv.Atoi(value); err != nil {
-			return 0, err
-		} else {
-			return value, nil
-		}
+		return strconv.Atoi(v)
 	default:
-		return 0, nil
+		return 0, fmt.Errorf("неподдерживаемый тип: %T", value)
 	}
 }
 
-func GetDayForm(num interface{}) string {
-	var number int
-
-	switch v := num.(type) {
-	case int:
-		number = v
-	case int64:
-		number = int(v)
-	default:
-		return "дней"
-	}
-	lastDigit := number % 10
-	lastTwoDigits := number % 100
-
-	if number == 0 {
-		return "дней"
-	} else if lastDigit == 1 && lastTwoDigits != 11 {
+func GetDayForm(days int) string {
+	if days == 1 {
 		return "день"
-	} else if lastDigit == 2 && lastTwoDigits != 4 || !(lastDigit >= 12 && lastTwoDigits <= 14) {
+	} else if days >= 2 && days <= 4 {
 		return "дня"
 	} else {
 		return "дней"

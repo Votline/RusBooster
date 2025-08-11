@@ -1,16 +1,18 @@
 package words
 
 import (
-	"RusBooster/internal/utils"
 	"fmt"
-	sq "github.com/Masterminds/squirrel"
-	_ "github.com/lib/pq"
-	"go.uber.org/zap"
+	"log"
 	"strings"
+
+	_ "github.com/lib/pq"
+	sq "github.com/Masterminds/squirrel"
+
+	"RusBooster/internal/utils"
 )
 
-func createTable(log *zap.Logger) {
-	db, _ := utils.GetDb(log)
+func createTable() {
+	db, _ := utils.GetDb()
 	defer db.Close()
 
 	wordsTable := `
@@ -21,13 +23,13 @@ func createTable(log *zap.Logger) {
 		)
 	`
 	if _, err := db.Exec(wordsTable); err != nil {
-		log.Fatal("Ошибка при попытке создать wordsTable", zap.Error(err))
+		log.Fatalf("Ошибка при попытке создать wordsTable: %v", err)
 	}
-	log.Info("Таблица words создана или уже существует")
+	log.Printf("Таблица words создана или уже существует")
 }
 
-func GetAll(log *zap.Logger, wordsForTask map[string]string, currentTask int) error {
-	db, psql := utils.GetDb(log)
+func GetAll(wordsForTask map[string]string, currentTask int) error {
+	db, psql := utils.GetDb()
 	defer db.Close()
 
 	query, args, err := psql.Select("word", "explanation").
@@ -35,21 +37,21 @@ func GetAll(log *zap.Logger, wordsForTask map[string]string, currentTask int) er
 		Where(sq.Eq{"task_id": currentTask}).
 		ToSql()
 	if err != nil {
-		log.Error("Ошибка при попытке создать запрос", zap.Error(err))
+		log.Printf("Ошибка при попытке создать запрос: %v", err)
 		return err
 	}
 
 	rows, errX := db.Queryx(query, args...)
 	if errX != nil {
-		log.Error("Ошибка при попытке выполнить запрос", zap.Error(errX))
-		createTable(log)
+		log.Printf("Ошибка при попытке выполнить запрос: %v", errX)
+		createTable()
 		return errX
 	}
 
 	var word, explanation string
 	for rows.Next() {
 		if errScan := rows.Scan(&word, &explanation); errScan != nil {
-			log.Error("Ошибка при попытке считывания результата")
+			log.Printf("Ошибка при попытке считывания результата: %v", errScan)
 			return errScan
 		}
 		wordsForTask[word] = explanation
@@ -57,11 +59,11 @@ func GetAll(log *zap.Logger, wordsForTask map[string]string, currentTask int) er
 	return nil
 }
 
-func SetSomething(log *zap.Logger, word string, explanation string, taskId int) string {
-	if _, err := FindWord(log, taskId, word); err == nil {
+func SetSomething(word string, explanation string, taskId int) string {
+	if _, err := FindWord(taskId, word); err == nil {
 		return fmt.Sprintf("Слово '%s' уже существует в бд", word)
 	}
-	db, psql := utils.GetDb(log)
+	db, psql := utils.GetDb()
 	defer db.Close()
 
 	ins, args, err := psql.Insert("words").
@@ -77,19 +79,19 @@ func SetSomething(log *zap.Logger, word string, explanation string, taskId int) 
 	return fmt.Sprintf("Успешно! Слово: %s\nи пояснение: %s\nдобавлены к заданию: %d", word, explanation, taskId)
 }
 
-func DeleteWord(log *zap.Logger, taskId int, word string) string {
-	db, psql := utils.GetDb(log)
+func DeleteWord(taskId int, word string) string {
+	db, psql := utils.GetDb()
 	defer db.Close()
 
 	req, args, err := psql.Delete("words").
 		Where(sq.Eq{"task_id": taskId, "word": word}).
 		ToSql()
 	if err != nil {
-		return fmt.Sprintf("Ошибка при попытке создать запрос \n%v", zap.Error(err))
+		return fmt.Sprintf("Ошибка при попытке создать запрос: %v", err)
 	}
 	result, errExec := db.Exec(req, args...)
 	if errExec != nil {
-		return fmt.Sprintf("Ошибка при попытке выполнить запрос \n%v", zap.Error(errExec))
+		return fmt.Sprintf("Ошибка при попытке выполнить запрос: %v", errExec)
 	}
 	rowsAffected, err := result.RowsAffected()
 	if rowsAffected == 0 {
@@ -98,29 +100,28 @@ func DeleteWord(log *zap.Logger, taskId int, word string) string {
 	return fmt.Sprintf("Успешно удалил слово: %s", word)
 }
 
-func FindWord(log *zap.Logger, taskId int, word string) (string, error){
-	db, psql := utils.GetDb(log)
+func FindWord(taskId int, word string) (string, error){
+	db, psql := utils.GetDb()
 	defer db.Close()
 
-	query, args, err := psql.Select("word", "explanation").
+	query, args, err := psql.Select("explanation").
 		From("words").
-		Where(sq.Eq{"task_id": taskId}).
-		Where(sq.Eq{"word": word}).
+		Where(sq.Eq{"task_id": taskId, "word": word}).
 		ToSql()
 	if err != nil {
-		return fmt.Sprintf("Ошибка при попытке создать запрос \n%v", zap.Error(err)), err
+		return fmt.Sprintf("Ошибка при попытке создать запрос: %v", err), err
 	}
-	var neededWord, neededExplanation string
-	if errRow := db.QueryRow(query, args...).Scan(&neededWord, &neededExplanation); errRow != nil {
-		return fmt.Sprintf("Ошибка при попытке создать запрос \n%v", zap.Error(errRow)), errRow
+	var explanation string
+	if errRow := db.QueryRowx(query, args...).Scan(&explanation); errRow != nil {
+		return fmt.Sprintf("Ошибка при попытке создать запрос: %v", errRow), errRow
 	}
-	return fmt.Sprintf("Нужное слово: %v\nПояснение: %v", neededWord, neededExplanation), nil
+	return explanation, nil
 }
 
-func ShowAllWords(log *zap.Logger, userId int64, taskId int, targetSlice *[]string, targetPage *int, filter bool, neededLetter string) string {
+func ShowAllWords(userId int64, taskId int, targetSlice *[]string, targetPage *int, filter bool, neededLetter string) string {
 	allWords := make(map[string]string)
-	if err := GetAll(log, allWords, taskId); err != nil {
-		return fmt.Sprintf("Ошибка при попытке заполнить allWords \n%v", zap.Error(err))
+	if err := GetAll(allWords, taskId); err != nil {
+		return fmt.Sprintf("Ошибка при попытке заполнить allWords: %v", err)
 	}
 
 	var cnt int = 0
