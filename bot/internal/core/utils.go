@@ -1,6 +1,10 @@
 package core
 
-import "log"
+import (
+	"log"
+
+	"RusBooster/internal/utils"
+)
 
 func toIntMap(src map[string]interface{}) map[string]int {
 	dst := make(map[string]int, len(src))
@@ -30,4 +34,32 @@ func toInterfaceMap(src map[string]int) map[string]interface{} {
 	}
 
 	return dst
+}
+
+func allEqual(letters []rune) bool {
+	if len(letters) == 0 {
+		return false
+	}
+	for _, r := range letters {
+		if r != letters[0] {
+			return false
+		}
+	}
+	return true
+}
+
+func checkEquals(correct, verifiable string) bool {
+	correct = utils.GetDigitHash(correct)
+	verifiable = utils.GetDigitHash(verifiable)
+	return correct == verifiable
+}
+
+func sumDigits(number int) int {
+	sum := 0
+	for number > 0 {
+		digit := number % 10
+		sum += digit
+		number /= 10
+	}
+	return sum
 }

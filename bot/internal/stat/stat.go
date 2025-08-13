@@ -34,22 +34,6 @@ func createTable() {
 	log.Printf("Таблица users создана или уже существует")
 }
 
-func appendUser(userId int64) {
-	db, psql := utils.GetDb()
-	defer db.Close()
-
-	ins, args, err := psql.Insert("users").
-		Columns("id").
-		Values(userId).
-		ToSql()
-	if err != nil {
-		log.Fatalf("Ошибка при попытке добавить id пользователя в users: %v", err)
-	}
-	if _, errExec := db.Exec(ins, args...); errExec != nil {
-		log.Fatalf("Ошибка при попытке выполнить запроса: %v", errExec)
-	}
-}
-
 func GetStatistic(userName string, userId int64) string {
 	var message string
 
@@ -85,7 +69,7 @@ func GetStatistic(userName string, userId int64) string {
 		worstTaskScore, _  := utils.ToInt(result["worst_task_score"])
 		streak, _          := utils.ToInt(result["streak"])
 		timeZone, _        := utils.ToInt(result["time_zone"])
-		message = fmt.Sprintf("	👋Привет, %s!\nТекущее задание: №%d\nНаилучшая успеваимость: №%d, %d\nНаихудшая успеваимость: №%d, %d\nТы занимаешся уже: %d %s подряд!👏\nТекущий часовой пояс: %s\n", userName, currentTask, bestTaskResult, bestTaskScore, worstTaskResult, worstTaskScore, streak, utils.GetDayForm(streak), utils.GetTimeZoneForm(timeZone))
+		message = fmt.Sprintf("	👋Привет, %s!\nТекущее задание: №%d\nНаилучшая успеваимость: №%d, %d\nНаихудшая успеваимость: №%d, %d\nТы занимаешся уже: %d %s подряд!👏\nТекущий часовой пояс: %s\n", userName, currentTask, bestTaskResult, bestTaskScore, worstTaskResult, worstTaskScore, streak, getDayForm(streak), utils.GetTimeZoneForm(timeZone))
 		return message
 	} else if errRows := rows.Err(); errRows != nil {
 		log.Printf("Ошибка во время чтения rows: %v", errRows)

@@ -30,7 +30,7 @@ func findAnswer(explanations string, userState *state.UserState, userID int64) s
 			if len(words) == 0 {continue}
 			bases = append(bases, utils.FindUpperCase(words[0]))
 		}
-		if utils.AllEqual(bases) && bases[0] != 0 {
+		if allEqual(bases) && bases[0] != 0 {
 			userState.Answer += i+1
 			userState.OutputTask += "\n" + rows[i]
 			userState.OutputAnswer += strconv.Itoa(i+1)
@@ -47,6 +47,7 @@ func SendAnswer(userID int64, userAnswer int, userState *state.UserState) (strin
 	currentTask, _ := stat.GetSomething(userID, "current_task")
 	msg := fmt.Sprintf("%sОтвет на задание №%d: %s\n%s",
 		emoji, currentTask, userState.OutputAnswer, userState.OutputTask)
+	msg = strings.ReplaceAll(msg, "$", "")
 	return msg, err
 }
 
@@ -59,8 +60,8 @@ func checkAnswer(userID int64, userAnswer int, userState *state.UserState) (stri
 	now := time.Now().UTC().Add(time.Duration(userFields["time_zone"]) * time.Hour)
 	currentDate := int(now.Unix()/86400)
 
-	if utils.SumDigits(userAnswer) == userState.Answer {
-		if utils.CheckEquals(strconv.Itoa(userAnswer), userState.OutputAnswer){
+	if sumDigits(userAnswer) == userState.Answer {
+		if checkEquals(strconv.Itoa(userAnswer), userState.OutputAnswer){
 			userFields["current_score"] += 1
 			emoji = "✅"
 		} else {

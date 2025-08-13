@@ -28,7 +28,7 @@ func Number9to12(wordsForTask map[string]string, howMuchWords int, userState *st
 	if len(userState.OutputAnswer) < 2 {
 		return Number9to12(wordsForTask, howMuchWords, userState, userID)
 	}
-
+	
 	return message
 }
 

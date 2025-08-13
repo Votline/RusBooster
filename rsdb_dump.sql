@@ -85,7 +85,7 @@ COPY public.guides (task_id, guide) FROM stdin;
 
 COPY public.users (id, current_task, current_score, worst_task_result, worst_task_score, best_task_result, best_task_score, streak, last_active_date, time_zone, streak_freeze) FROM stdin;
 1218711088	1	0	0	0	0	0	0	0	0	0
-5459965917	23	-10	10	-10	0	0	1	20313	0	0
+5459965917	9	-10	10	-10	0	0	1	20313	0	0
 \.
 
 

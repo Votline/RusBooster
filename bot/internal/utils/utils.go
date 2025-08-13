@@ -15,24 +15,6 @@ import (
 	sq "github.com/Masterminds/squirrel"
 )
 
-func ContainsRune(text string, item string) bool {
-	for _, r := range text {
-		if string(r) == item {
-			return true
-		}
-	}
-	return false
-}
-
-func Contains(slice []string, item string) bool {
-	for _, value := range slice {
-		if value == item {
-			return true
-		}
-	}
-	return false
-}
-
 func FindUpperCase(word string) rune {
 	for _, r := range word {
 		if unicode.IsUpper(r) {
@@ -42,38 +24,10 @@ func FindUpperCase(word string) rune {
 	return 0
 }
 
-func AllEqual(letters []rune) bool {
-	if len(letters) == 0 {
-		return false
-	}
-	for _, r := range letters {
-		if r != letters[0] {
-			return false
-		}
-	}
-	return true
-}
-
-func getDigitHash(s string) string {
+func GetDigitHash(s string) string {
 	runes := []rune(s)
 	sort.Slice(runes, func(i, j int) bool { return runes[i] < runes[j] })
 	return string(runes)
-}
-
-func CheckEquals(correct, verifiable string) bool {
-	correct = getDigitHash(correct)
-	verifiable = getDigitHash(verifiable)
-	return correct == verifiable
-}
-
-func SumDigits(number int) int {
-	sum := 0
-	for number > 0 {
-		digit := number % 10
-		sum += digit
-		number /= 10
-	}
-	return sum
 }
 
 func ActionAfter(action func() error, delay int, errMessage string) {
@@ -83,14 +37,6 @@ func ActionAfter(action func() error, delay int, errMessage string) {
 			log.Printf("%s: %v", errMessage, err)
 		}
 	}()
-}
-
-func HandleError(action func() error, errMsg string) string {
-	if err := action(); err != nil {
-		log.Printf("%s: %v", errMsg, err)
-		return GetReturnText(false)
-	}
-	return ""
 }
 
 func GetDb() (*sqlx.DB, sq.StatementBuilderType) {
