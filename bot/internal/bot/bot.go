@@ -183,7 +183,11 @@ func HandleText(bot *tele.Bot, con tele.Context) error {
 				return nil
 			}
 			userState.IsChecking = false
-			text := core.SendAnswer(userId, userValue, userState)
+			text, err := core.SendAnswer(userId, userValue, userState)
+			if err != nil {
+				text = (utils.GetReturnText(false) + "\nДанные не сохранены")
+				return con.Send(text)
+			}
 			menu := keyboard.MakeAnswerKeyboard()
 			return con.Send(text, menu)
 		} else if userState.IsSetting {

@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 17.4
--- Dumped by pg_dump version 17.4
+-- Dumped from database version 17.5 (Debian 17.5-1.pgdg120+1)
+-- Dumped by pg_dump version 17.5 (Debian 17.5-1.pgdg120+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -22,7 +22,7 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
--- Name: guides; Type: TABLE; Schema: public; Owner: postgres
+-- Name: guides; Type: TABLE; Schema: public; Owner: rusbooster
 --
 
 CREATE TABLE public.guides (
@@ -31,10 +31,10 @@ CREATE TABLE public.guides (
 );
 
 
-ALTER TABLE public.guides OWNER TO postgres;
+ALTER TABLE public.guides OWNER TO rusbooster;
 
 --
--- Name: users; Type: TABLE; Schema: public; Owner: postgres
+-- Name: users; Type: TABLE; Schema: public; Owner: rusbooster
 --
 
 CREATE TABLE public.users (
@@ -52,10 +52,10 @@ CREATE TABLE public.users (
 );
 
 
-ALTER TABLE public.users OWNER TO postgres;
+ALTER TABLE public.users OWNER TO rusbooster;
 
 --
--- Name: words; Type: TABLE; Schema: public; Owner: postgres
+-- Name: words; Type: TABLE; Schema: public; Owner: rusbooster
 --
 
 CREATE TABLE public.words (
@@ -65,10 +65,10 @@ CREATE TABLE public.words (
 );
 
 
-ALTER TABLE public.words OWNER TO postgres;
+ALTER TABLE public.words OWNER TO rusbooster;
 
 --
--- Data for Name: guides; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: guides; Type: TABLE DATA; Schema: public; Owner: rusbooster
 --
 
 COPY public.guides (task_id, guide) FROM stdin;
@@ -80,17 +80,17 @@ COPY public.guides (task_id, guide) FROM stdin;
 
 
 --
--- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: rusbooster
 --
 
 COPY public.users (id, current_task, current_score, worst_task_result, worst_task_score, best_task_result, best_task_score, streak, last_active_date, time_zone, streak_freeze) FROM stdin;
-5459965917	9	-8	9	-8	0	0	0	0	0	0
 1218711088	1	0	0	0	0	0	0	0	0	0
+5459965917	23	-10	10	-10	0	0	1	20313	0	0
 \.
 
 
 --
--- Data for Name: words; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: words; Type: TABLE DATA; Schema: public; Owner: rusbooster
 --
 
 COPY public.words (word, explanation, task_id) FROM stdin;
@@ -980,7 +980,7 @@ c_брать	сОбрать - неизменяемая приставка -С-(�
 
 
 --
--- Name: guides guides_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: guides guides_pkey; Type: CONSTRAINT; Schema: public; Owner: rusbooster
 --
 
 ALTER TABLE ONLY public.guides
@@ -988,7 +988,7 @@ ALTER TABLE ONLY public.guides
 
 
 --
--- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: rusbooster
 --
 
 ALTER TABLE ONLY public.users
