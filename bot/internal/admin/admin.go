@@ -1,7 +1,7 @@
 package admin
 
 import (
-	"fmt"
+	"log"
 	"strings"
 	"strconv"
 
@@ -10,69 +10,59 @@ import (
 	"RusBooster/internal/guide"
 )
 
-func HandleCommands(userState *state.UserState, userId int64, userMessage string) string {
-	parts := strings.Fields(userMessage)
+func HandleCommands(userState *state.UserState, userID int64, userMessage string) string {
+	content := make([]string, 0)
+	parts := strings.SplitN(userMessage, " ", 3)
 	if len(parts) < 2 {
 		return "Недостаточно аргументов"
+	} else if len(parts) > 2 {
+		content = strings.SplitN(parts[2], "$", 2)
 	}
+	
+	command := parts[0]
+	taskID, err := strconv.Atoi(parts[1])
+	if err != nil {return "Неверный taskID"}
 
-	command := parts[1]
 	switch command {
-	case "addword":
-		if len(parts) < 5 {
-			return "Использование: /admin addword <taskId> <word> <explanation>"
-		}
-		taskId, err := strconv.Atoi(parts[2])
-		if err != nil {
-			return "Неверный taskId"
-		}
-		word := parts[3]
-		explanation := strings.Join(parts[4:], " ")
-		return words.SetSomething(word, explanation, taskId)
-
-	case "delword":
+	case "/addword":
 		if len(parts) < 4 {
-			return "Использование: /admin delword <taskId> <word>"
+			return "Использование: /addword <taskID> <word> <explanation>"
 		}
-		taskId, err := strconv.Atoi(parts[2])
-		if err != nil {
-			return "Неверный taskId"
-		}
-		word := parts[3]
-		return words.DeleteWord(taskId, word)
+		return words.SetSomething(content[0], content[1], taskID)
 
-	case "addguide":
-		if len(parts) < 4 {
-			return "Использование: /admin addguide <taskId> <guide_text>"
-		}
-		taskId, err := strconv.Atoi(parts[2])
-		if err != nil {
-			return "Неверный taskId"
-		}
-		guideText := strings.Join(parts[3:], " ")
-		return guide.AppendGuide(taskId, guideText)
-
-	case "delguide":
+	case "/delword":
 		if len(parts) < 3 {
-			return "Использование: /admin delguide <taskId>"
+			return "Использование: /delword <taskID> <word>"
 		}
-		taskId, err := strconv.Atoi(parts[2])
-		if err != nil {
-			return "Неверный taskId"
-		}
-		return guide.DeleteGuide(taskId)
+		return words.DeleteWord(taskID, content[0])
 
-	case "showall":
+	case "/addguide":
 		if len(parts) < 3 {
-			return "Использование: /admin showall <taskId>"
+			return "Использование: /addguide <taskID> <guide_text>"
 		}
-		_, err := strconv.Atoi(parts[2])
-		if err != nil {
-			return "Неверный taskId"
+		log.Println(content[0])
+		return guide.AppendGuide(taskID, content[0])
+
+	case "/delguide":
+		if len(parts) < 2 {
+			return "Использование: /delguide <taskID>"
 		}
-		return fmt.Sprintf("Все слова: \n")
+		return guide.DeleteGuide(taskID)
+
+	case "/showall":
+		if len(parts) < 2 {
+			return "Использование: /showall <taskID>"
+		} else if len(parts) > 2 {
+			return "Найденные слова: \n" + words.ShowAllWords(
+				userID, taskID, &userState.PartsOfFindWords,
+				&userState.CurrentPageOfFindWords, true, content[0])
+		}
+		return "Все слова: \n" + words.ShowAllWords(
+			userID, taskID, &userState.PartsOfAllWords,
+			&userState.CurrentPageOfAllWords, false, "")
 
 	default:
+		log.Printf("Неизвестная команда: %s", command)
 		return "Неизвестная команда"
 	}
 }

@@ -78,8 +78,8 @@ func ShowGuide(taskId int, targetPage *int, targetSlice *[]string) string {
 		return utils.GetReturnText(false)
 	}
 	
-	*targetPage = 0	
+	*targetPage = 0
 	*targetSlice = strings.Split(guideText, "@")
 	
-	return (*targetSlice)[0] 
+	return (*targetSlice)[0]
 }

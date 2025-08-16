@@ -19,7 +19,7 @@ func ShowWordsMenu(userState *state.UserState, currentPage *int, currentSlice []
 
 	btnShowPrevious := selector.Data("<", "ShowPreviousWords")
 	btnShowNext := selector.Data(">", "ShowNextWords")
-	btnAllPages := selector.Data(allPagesText, "AllPages")
+	btnAllPages := selector.Data(allPagesText, "Ignore")
 
 	selector.Inline(
 		selector.Row(btnShowPrevious, btnShowNext),
